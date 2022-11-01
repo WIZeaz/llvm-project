@@ -1,0 +1,188 @@
+//===-- Y86InstrInfo.cpp - Y86 Instruction Information --------------------===//
+//
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains the Y86 implementation of the TargetInstrInfo class.
+//
+//===----------------------------------------------------------------------===//
+
+#include "Y86Subtarget.h"
+#include "Y86InstrInfo.h"
+#include "Y86MachineFunctionInfo.h"
+#include "Y86TargetMachine.h"
+#include "Y86RegisterInfo.h"
+#include "MCTargetDesc/Y86MCTargetDesc.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Sequence.h"
+#include "llvm/CodeGen/LiveIntervals.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/StackMaps.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Target/TargetOptions.h"
+
+using namespace llvm;
+
+
+#define DEBUG_TYPE "y86-instr-info"
+
+#define GET_INSTRINFO_CTOR_DTOR
+#include "Y86GenInstrInfo.inc"
+
+// Pin the vtable to this file.
+void Y86InstrInfo::anchor() {}
+
+Y86InstrInfo::Y86InstrInfo(Y86Subtarget &STI)
+    : Y86GenInstrInfo(/* Y86::ADJCALLSTACKDOWN32,
+                      Y86::ADJCALLSTACKUP32,
+                      Y86::CATCHRET,
+                      Y86::RET32 */),
+      Subtarget(STI), RI(STI) {
+}
+
+void Y86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator MI,
+                               const DebugLoc &DL, MCRegister DestReg,
+                               MCRegister SrcReg, bool KillSrc) const {
+  // First deal with the normal symmetric copies.
+  // bool HasAVX = Subtarget.hasAVX();
+  // bool HasVLX = Subtarget.hasVLX();
+  unsigned Opc = 0;
+  if (Y86::GR32RegClass.contains(DestReg, SrcReg)){
+    Opc = Y86::MOV32rr;
+  }
+
+  /* if (!Opc)
+    Opc = CopyToFromAsymmetricReg(DestReg, SrcReg, Subtarget); */
+
+  if (Opc) {
+    BuildMI(MBB, MI, DL, get(Opc), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    return;
+  }
+
+  if (SrcReg == Y86::EFLAGS || DestReg == Y86::EFLAGS) {
+    // FIXME: We use a fatal error here because historically LLVM has tried
+    // lower some of these physreg copies and we want to ensure we get
+    // reasonable bug reports if someone encounters a case no other testing
+    // found. This path should be removed after the LLVM 7 release.
+    report_fatal_error("Unable to copy EFLAGS physical register!");
+  }
+
+  LLVM_DEBUG(dbgs() << "Cannot copy " << RI.getName(SrcReg) << " to "
+                    << RI.getName(DestReg) << '\n');
+  report_fatal_error("Cannot emit physreg copy instruction");
+}
+
+/// Test if the given register is a physical h register.
+static bool isHReg(unsigned Reg) {
+  return Y86::GR8_ABCD_HRegClass.contains(Reg);
+}
+
+static unsigned getLoadStoreRegOpcode(Register Reg,
+                                      const TargetRegisterClass *RC,
+                                      bool IsStackAligned,
+                                      const Y86Subtarget &STI, bool load) {
+
+  switch (STI.getRegisterInfo()->getSpillSize(*RC)) {
+  default:
+    llvm_unreachable("Unknown spill size");
+  case 1:
+    assert(Y86::GR8RegClass.hasSubClassEq(RC) && "Unknown 1-byte regclass");
+    if (STI.is64Bit())
+      // Copying to or from a physical H register on Y86-64 requires a NOREX
+      // move.  Otherwise use a normal move.
+      if (isHReg(Reg) || Y86::GR8_ABCD_HRegClass.hasSubClassEq(RC))
+        return load ? Y86::MOV8rm_NOREX : Y86::MOV8mr_NOREX;
+    return load ? Y86::MOV8rm : Y86::MOV8mr;
+  case 2:
+    assert(Y86::GR16RegClass.hasSubClassEq(RC) && "Unknown 2-byte regclass");
+    return load ? Y86::MOV16rm : Y86::MOV16mr;
+  case 4:
+    if (Y86::GR32RegClass.hasSubClassEq(RC))
+      return load ? Y86::MOV32rm : Y86::MOV32mr;
+    llvm_unreachable("Unknown 4-byte regclass");
+
+  }
+}
+
+static unsigned getStoreRegOpcode(Register SrcReg,
+                                  const TargetRegisterClass *RC,
+                                  bool IsStackAligned,
+                                  const Y86Subtarget &STI) {
+  return getLoadStoreRegOpcode(SrcReg, RC, IsStackAligned, STI, false);
+}
+
+static unsigned getLoadRegOpcode(Register DestReg,
+                                 const TargetRegisterClass *RC,
+                                 bool IsStackAligned, const Y86Subtarget &STI) {
+  return getLoadStoreRegOpcode(DestReg, RC, IsStackAligned, STI, true);
+}
+
+
+void Y86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MI,
+                                       Register SrcReg, bool isKill, int FrameIdx,
+                                       const TargetRegisterClass *RC,
+                                       const TargetRegisterInfo *TRI) const {
+  const MachineFunction &MF = *MBB.getParent();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  assert(MFI.getObjectSize(FrameIdx) >= TRI->getSpillSize(*RC) &&
+         "Stack slot too small for store");
+    unsigned Alignment = std::max<uint32_t>(TRI->getSpillSize(*RC), 16);
+    bool isAligned =
+        (Subtarget.getFrameLowering()->getStackAlign() >= Alignment) ||
+        (RI.canRealignStack(MF) && !MFI.isFixedObjectIndex(FrameIdx));
+    unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, Subtarget);
+    /* addFrameReference(BuildMI(MBB, MI, DebugLoc(), get(Opc)), FrameIdx)
+        .addReg(SrcReg, getKillRegState(isKill));*/
+}
+
+void Y86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MI,
+                                        Register DestReg, int FrameIdx,
+                                        const TargetRegisterClass *RC,
+                                        const TargetRegisterInfo *TRI) const {
+    const MachineFunction &MF = *MBB.getParent();
+    const MachineFrameInfo &MFI = MF.getFrameInfo();
+    unsigned Alignment = std::max<uint32_t>(TRI->getSpillSize(*RC), 16);
+    bool isAligned =
+        (Subtarget.getFrameLowering()->getStackAlign() >= Alignment) ||
+        (RI.canRealignStack(MF) && !MFI.isFixedObjectIndex(FrameIdx));
+    unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, Subtarget);
+    /* addFrameReference(BuildMI(MBB, MI, DebugLoc(), get(Opc), DestReg),
+                      FrameIdx);*/
+}
+
+bool Y86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
+    return false;
+}
+
+/* MCInst Y86InstrInfo::getNop() const {
+  MCInst Nop;
+  Nop.setOpcode(Y86::NOOP);
+  return Nop;
+}
+ */
+
+#define GET_INSTRINFO_HELPERS
+#include "Y86GenInstrInfo.inc"

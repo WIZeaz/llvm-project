@@ -83,6 +83,7 @@ public:
     thumbeb,        // Thumb (big endian): thumbeb
     x86,            // X86: i[3-9]86
     x86_64,         // X86-64: amd64, x86_64
+    y86,            // Y86: a subset of X86 ISA
     xcore,          // XCore: xcore
     nvptx,          // NVPTX: 32-bit
     nvptx64,        // NVPTX: 64-bit

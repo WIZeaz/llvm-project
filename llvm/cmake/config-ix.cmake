@@ -462,9 +462,11 @@ elseif (LLVM_NATIVE_ARCH MATCHES "riscv32")
   set(LLVM_NATIVE_ARCH RISCV)
 elseif (LLVM_NATIVE_ARCH MATCHES "riscv64")
   set(LLVM_NATIVE_ARCH RISCV)
+elseif (LLVM_NATIVE_ARCH MATCHES "Y86")
+  set(LLVM_NATIVE_ARCH Y86)
 elseif (LLVM_NATIVE_ARCH STREQUAL "m68k")
   set(LLVM_NATIVE_ARCH M68k)
-else ()
+
   message(FATAL_ERROR "Unknown architecture ${LLVM_NATIVE_ARCH}")
 endif ()
 
