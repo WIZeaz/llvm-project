@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Y86ISelDAGToDAG.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/IR/Attributes.h"
@@ -132,6 +133,8 @@ public:
 };
 } // namespace
 
+
+
 TargetPassConfig *Y86TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new Y86PassConfig(*this, PM);
 }
@@ -144,7 +147,7 @@ TargetPassConfig *Y86TargetMachine::createPassConfig(PassManagerBase &PM) {
 // Install an instruction selector pass using
 // the ISelDag to gen Y86 code.
 bool Y86PassConfig::addInstSelector() {
-  //addPass(createY86ISelDag(getY86TargetMachine(), getOptLevel()));
+  addPass(new Y86DAGToDAGISel(getY86TargetMachine(), getOptLevel()));
   return false;
 }
 

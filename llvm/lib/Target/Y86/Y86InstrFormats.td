@@ -107,8 +107,8 @@ class Y86Inst<bits<8> op, Format f, ImmType i, dag outs, dag ins, string asmstr,
     let Pattern=pattern;
 }
 
-class Y86Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-      Y86Inst<0, Pseudo, NoImm, outs, ins, asmstr, pattern> {
+class PseudoI<dag outs, dag ins, list<dag> pattern>:
+      Y86Inst<0, Pseudo, NoImm, outs, ins, "", pattern> {
   let isCodeGenOnly = 1;
   let isPseudo = 1;
 }

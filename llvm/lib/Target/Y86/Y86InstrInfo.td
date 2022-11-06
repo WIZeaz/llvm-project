@@ -1,4 +1,10 @@
 
+def SDTY86Ret     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
+
+def Y86retflag : SDNode<"Y86ISD::RET_FLAG", SDTY86Ret,
+                        [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
+def RET  : PseudoI<(outs), (ins i32imm:$adj, variable_ops), [(Y86retflag timm:$adj)]>;
 
 // A version of ptr_rc which excludes SP, ESP, and RSP. This is used for
 // the index operand of an address, to conform to x86 encoding restrictions.
@@ -88,7 +94,7 @@ def MOV32rr : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>, OpSize32;
 }
 
-def imm_su : PatLeaf<(imm), [{
+/* def imm_su : PatLeaf<(imm), [{
     return !shouldAvoidImmediateInstFormsForSize(N);
 }]>;
 
@@ -102,7 +108,7 @@ def MOV16mi : Ii16<0xC7, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src),
 def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(store (i32 imm_su:$src), addr:$dst)]>, OpSize32;
-} // SchedRW
+} // SchedRW */
 
 let isAsCheapAsAMove = 1, isMoveImm = 1 in {
 def MOV8ri  : Ii8 <0xB0, AddRegFrm, (outs GR8 :$dst), (ins i8imm :$src),

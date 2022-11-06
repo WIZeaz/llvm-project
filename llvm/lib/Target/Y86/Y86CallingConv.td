@@ -33,15 +33,9 @@ def RetCC_Y86_Fast : CallingConv<[
 
 // This is the root return-value convention for the Y86-32 backend.
 def RetCC_Y86 : CallingConv<[
-  // If FastCC, use RetCC_Y86_32_Fast.
-  CCIfCC<"CallingConv::Fast", CCDelegateTo<RetCC_Y86_Fast>>,
-  CCIfCC<"CallingConv::Tail", CCDelegateTo<RetCC_Y86_Fast>>,
-  // CFGuard_Check never returns a value so does not need a RetCC.
-  // CCIfCC<"CallingConv::Y86_RegCall", CCDelegateTo<RetCC_Y86_32_RegCall>>,
-
-  // Otherwise, use RetCC_Y86_32_C.
-  // CCDelegateTo<RetCC_Y86_32_C>
+  CCDelegateTo<RetCC_Y86Common>
 ]>;
+
 
 /// CC_Y86_32_Common - In all Y86-32 calling conventions, extra integers and FP
 /// values are spilled on the stack.
@@ -56,24 +50,25 @@ def CC_Y86_Common : CallingConv<[
 
 ]>;
 
-/* // This is the root argument convention for the Y86-32 backend.
-def CC_Y86_32 : CallingConv<[
-  // Y86_INTR calling convention is valid in MCU target and should override the
-  // MCU calling convention. Thus, this should be checked before isTargetMCU().
-  CCIfCC<"CallingConv::Y86_INTR", CCCustom<"CC_Y86_Intr">>,
-  CCIfCC<"CallingConv::Y86_FastCall", CCDelegateTo<CC_Y86_32_FastCall>>,
-  CCIfCC<"CallingConv::Y86_VectorCall", CCDelegateTo<CC_Y86_Win32_VectorCall>>,
-  CCIfCC<"CallingConv::Y86_ThisCall", CCDelegateTo<CC_Y86_32_ThisCall>>,
-  CCIfCC<"CallingConv::CFGuard_Check", CCDelegateTo<CC_Y86_Win32_CFGuard_Check>>,
-  CCIfCC<"CallingConv::Fast", CCDelegateTo<CC_Y86_32_FastCC>>,
-  CCIfCC<"CallingConv::Tail", CCDelegateTo<CC_Y86_32_FastCC>>,
-  CCIfCC<"CallingConv::GHC", CCDelegateTo<CC_Y86_32_GHC>>,
-  CCIfCC<"CallingConv::Y86_RegCall", CCDelegateTo<CC_Y86_32_RegCall>>,
+// X86 C Calling Conv
+def CC_Y86 : CallingConv<[
+  // Promote i1/i8/i16/v1i1 arguments to i32.
+  CCIfType<[i1, i8, i16, v1i1], CCPromoteToType<i32>>,
 
-  // Otherwise, drop to normal Y86-32 CC
-  CCDelegateTo<CC_Y86_32_C>
-]>; */
+  // The 'nest' parameter, if any, is passed in ECX.
+  CCIfNest<CCAssignToReg<[ECX]>>,
 
+  // On swifttailcc pass swiftself in ECX.
+  CCIfCC<"CallingConv::SwiftTail",
+         CCIfSwiftSelf<CCIfType<[i32], CCAssignToReg<[ECX]>>>>,
+
+  // The first 3 integer arguments, if marked 'inreg' and if the call is not
+  // a vararg call, are passed in integer registers.
+  CCIfNotVarArg<CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>>>,
+
+  // Otherwise, same as everything else.
+  CCDelegateTo<CC_Y86_Common>
+]>;
 
 def CSR_NoRegs : CalleeSavedRegs<(add)>;
 

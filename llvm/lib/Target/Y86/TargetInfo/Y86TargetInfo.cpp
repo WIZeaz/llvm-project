@@ -16,6 +16,6 @@ Target& llvm::getTheY86Target() {
   return TheY86Target;
 }
 
-extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeCpu0TargetInfo() {
+extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeY86TargetInfo() {
   RegisterTarget<Triple::y86> X(getTheY86Target(), "y86", "Y86", "Y86");
 }

@@ -26,6 +26,7 @@ enum NodeType : unsigned {
   // Start the numbering where the builtin ops leave off.
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   CALL,
+  RET_FLAG,
 };
 } // namespace Y86ISD
 
@@ -36,6 +37,21 @@ public:
   bool useSoftFloat() const override { return true; }
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
   const char *getTargetNodeName(unsigned Opcode) const override;
+
+  SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
+                               bool IsVarArg,
+                               const SmallVectorImpl<ISD::InputArg> &Ins,
+                               const SDLoc &dl, SelectionDAG &DAG,
+                               SmallVectorImpl<SDValue> &InVals) const override;
+  SDValue LowerMemArgument(SDValue Chain, CallingConv::ID CallConv,
+                           const SmallVectorImpl<ISD::InputArg> &Ins,
+                           const SDLoc &dl, SelectionDAG &DAG,
+                           const CCValAssign &VA, MachineFrameInfo &MFI,
+                           unsigned i) const;
+  SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
+                      const SmallVectorImpl<ISD::OutputArg> &Outs,
+                      const SmallVectorImpl<SDValue> &OutVals, const SDLoc &dl,
+                      SelectionDAG &DAG) const;
 
 private:
   const Y86Subtarget &Subtarget;

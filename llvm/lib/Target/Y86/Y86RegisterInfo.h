@@ -61,6 +61,7 @@ public:
   /// getFrameRegister() which returns the "base pointer" in situations
   /// involving a stack, frame and base pointer.
   Register getFramePtr() const { return FramePtr; }
+  unsigned getSlotSize() const { return 4; }
 
 private:
   /// StackPtr - Y86 physical register used as stack ptr.

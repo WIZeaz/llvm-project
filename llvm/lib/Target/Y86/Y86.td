@@ -12,6 +12,8 @@ include "Y86CallingConv.td"
 
 def Y86InstrInfo : InstrInfo;
 
+def : ProcessorModel<"Y86",GenericModel,[],[]>;
+
 def Y86 : Target {
   let InstructionSet = Y86InstrInfo;
 }

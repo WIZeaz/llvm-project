@@ -64,24 +64,7 @@ MCSubtargetInfo *createY86MCSubtargetInfo(const Triple &TT, StringRef CPU,
                                           StringRef FS);
 } // namespace Y86_MC
 
-MCCodeEmitter *createY86MCCodeEmitter(const MCInstrInfo &MCII,
-                                      const MCRegisterInfo &MRI,
-                                      MCContext &Ctx);
 
-MCAsmBackend *createY86AsmBackend(const Target &T, const MCSubtargetInfo &STI,
-                                  const MCRegisterInfo &MRI,
-                                  const MCTargetOptions &Options);
-;
-
-/// Implements Y86-only directives for assembly emission.
-MCTargetStreamer *createY86AsmTargetStreamer(MCStreamer &S,
-                                             formatted_raw_ostream &OS,
-                                             MCInstPrinter *InstPrinter,
-                                             bool IsVerboseAsm);
-
-/// Implements Y86-only directives for object files.
-MCTargetStreamer *createY86ObjectTargetStreamer(MCStreamer &S,
-                                                const MCSubtargetInfo &STI);
 
 /// Construct an Y86 ELF object writer.
 std::unique_ptr<MCObjectTargetWriter>
