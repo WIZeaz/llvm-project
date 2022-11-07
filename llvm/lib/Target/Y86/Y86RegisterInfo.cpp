@@ -35,7 +35,7 @@ Y86RegisterInfo::Y86RegisterInfo(const Y86Subtarget &ST)
   BasePtr = Y86::EBX;
   //auto TFI = ST.getFrameLowering();
  // if (TFI->hasFP())
-    FramePtr = Y86::EBP;
+  FramePtr = Y86::EBP;
 }
 
 const TargetRegisterClass *
