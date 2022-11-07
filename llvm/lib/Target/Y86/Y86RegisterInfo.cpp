@@ -162,6 +162,7 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         FIOffset + (uint64_t)MI.getOperand(FIOperandNum + 3).getOffset();
     MI.getOperand(FIOperandNum + 3).setOffset(Offset);
   } */
+  llvm_unreachable("unimplemented");
 }
 
 bool Y86RegisterInfo::requiresRegisterScavenging(

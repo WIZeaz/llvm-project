@@ -61,7 +61,7 @@ SDValue Y86TargetLowering::LowerFormalArguments(
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
 
-  CCInfo.AllocateStack(32, Align(8));
+ // CCInfo.AllocateStack(32, Align(8));
   CCInfo.AnalyzeArguments(Ins, CC_Y86);
 
   // The next loop assumes that the locations are in the same order of the
@@ -98,6 +98,11 @@ SDValue Y86TargetLowering::LowerFormalArguments(
                                DAG.getValueType(VA.getValVT()));
       else if (VA.getLocInfo() == CCValAssign::BCvt)
         ArgValue = DAG.getBitcast(VA.getValVT(), ArgValue);
+
+      if (VA.isExtInLoc()) {
+        assert(VA.getValVT().isVector() && "Unsupport vector type");
+        ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
+      }
 
     } else {
       assert(VA.isMemLoc());
@@ -137,8 +142,8 @@ SDValue Y86TargetLowering::LowerFormalArguments(
     VarArgsLoweringHelper(FuncInfo, dl, DAG, Subtarget, CallConv, CCInfo)
         .lowerVarArgsParameters(Chain, StackSize); */
 
-  FuncInfo->setBytesToPopOnReturn(0);
-  FuncInfo->setArgumentStackSize(StackSize);
+  //FuncInfo->setBytesToPopOnReturn(0);
+  //FuncInfo->setArgumentStackSize(StackSize);
 
   return Chain;
 }

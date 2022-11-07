@@ -1,3 +1,4 @@
+def Not64BitMode : Predicate<"(true)">;
 
 def SDTY86Ret     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
 
@@ -122,7 +123,7 @@ def MOV32ri : Ii32<0xB8, AddRegFrm, (outs GR32:$dst), (ins i32imm:$src),
                    [(set GR32:$dst, imm:$src)]>, OpSize32;
 }
 
-let canFoldAsLoad = 1, SchedRW = [WriteLoad] in {
+let canFoldAsLoad = 1, isReMaterializable = 1, SchedRW = [WriteLoad] in {
 def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
                 [(set GR8:$dst, (loadi8 addr:$src))]>;
@@ -166,4 +167,26 @@ def MOV8rm_NOREX : I<0x8A, MRMSrcMem,
                      (outs GR8_NOREX:$dst), (ins i8mem_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}", []>,
                      Sched<[WriteLoad]>;
+}
+
+let Defs = [ESP], Uses = [ESP], hasSideEffects=0 in {
+let mayLoad = 1, SchedRW = [WriteLoad] in {
+def POP16r  : I<0x58, AddRegFrm, (outs GR16:$reg), (ins), "pop{w}\t$reg", []>,
+                OpSize16;
+def POP32r  : I<0x58, AddRegFrm, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>,
+                OpSize32, Requires<[Not64BitMode]>;
+}
+
+let mayStore = 1, SchedRW = [WriteStore] in {
+def PUSH16r  : I<0x50, AddRegFrm, (outs), (ins GR16:$reg), "push{w}\t$reg",[]>,
+                 OpSize16;
+def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>,
+                 OpSize32, Requires<[Not64BitMode]>;    
+def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
+                   "push{w}\t$imm", []>, OpSize16;
+def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
+                   "push{l}\t$imm", []>, OpSize32,
+                   Requires<[Not64BitMode]>;
+}
+
 }

@@ -66,8 +66,18 @@ void Y86DAGToDAGISel::Select(SDNode *Node) {
 bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                                  SDValue &Scale, SDValue &Index, SDValue &Disp,
                                  SDValue &Segment) {
-  Base=N;
-  return true;
+  SDLoc DL(N);
+  MVT VT = N.getSimpleValueType();
+  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), VT);
+    SDValue zero = CurDAG->getTargetConstant(0, DL, VT);
+    Scale = zero;
+    Index = zero;
+    Disp = zero;
+    Segment = zero;
+    return true;
+  }
+  return false;
 }
 
 FunctionPass *createY86ISelDag(Y86TargetMachine &TM,

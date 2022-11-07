@@ -10,12 +10,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Y86Subtarget.h"
 #include "Y86InstrInfo.h"
-#include "Y86MachineFunctionInfo.h"
-#include "Y86TargetMachine.h"
-#include "Y86RegisterInfo.h"
 #include "MCTargetDesc/Y86MCTargetDesc.h"
+#include "Y86InstrBuilder.h"
+#include "Y86MachineFunctionInfo.h"
+#include "Y86RegisterInfo.h"
+#include "Y86Subtarget.h"
+#include "Y86TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/CodeGen/LiveIntervals.h"
@@ -42,7 +43,6 @@
 
 using namespace llvm;
 
-
 #define DEBUG_TYPE "y86-instr-info"
 
 #define GET_INSTRINFO_CTOR_DTOR
@@ -67,16 +67,18 @@ void Y86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   // bool HasAVX = Subtarget.hasAVX();
   // bool HasVLX = Subtarget.hasVLX();
   unsigned Opc = 0;
-  if (Y86::GR32RegClass.contains(DestReg, SrcReg)){
+  if (Y86::GR32RegClass.contains(DestReg, SrcReg))
     Opc = Y86::MOV32rr;
-  }
-
+  else if (Y86::GR16RegClass.contains(DestReg, SrcReg))
+    Opc = Y86::MOV16rr;
+  else if (Y86::GR8RegClass.contains(DestReg, SrcReg))
+    Opc = Y86::MOV8rr;
   /* if (!Opc)
     Opc = CopyToFromAsymmetricReg(DestReg, SrcReg, Subtarget); */
 
   if (Opc) {
     BuildMI(MBB, MI, DL, get(Opc), DestReg)
-      .addReg(SrcReg, getKillRegState(KillSrc));
+        .addReg(SrcReg, getKillRegState(KillSrc));
     return;
   }
 
@@ -121,7 +123,6 @@ static unsigned getLoadStoreRegOpcode(Register Reg,
     if (Y86::GR32RegClass.hasSubClassEq(RC))
       return load ? Y86::MOV32rm : Y86::MOV32mr;
     llvm_unreachable("Unknown 4-byte regclass");
-
   }
 }
 
@@ -138,23 +139,23 @@ static unsigned getLoadRegOpcode(Register DestReg,
   return getLoadStoreRegOpcode(DestReg, RC, IsStackAligned, STI, true);
 }
 
-
 void Y86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
-                                       Register SrcReg, bool isKill, int FrameIdx,
+                                       Register SrcReg, bool isKill,
+                                       int FrameIdx,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
   const MachineFunction &MF = *MBB.getParent();
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   assert(MFI.getObjectSize(FrameIdx) >= TRI->getSpillSize(*RC) &&
          "Stack slot too small for store");
-    unsigned Alignment = std::max<uint32_t>(TRI->getSpillSize(*RC), 16);
-    bool isAligned =
-        (Subtarget.getFrameLowering()->getStackAlign() >= Alignment) ||
-        (RI.canRealignStack(MF) && !MFI.isFixedObjectIndex(FrameIdx));
-    unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, Subtarget);
-    /* addFrameReference(BuildMI(MBB, MI, DebugLoc(), get(Opc)), FrameIdx)
-        .addReg(SrcReg, getKillRegState(isKill));*/
+  unsigned Alignment = std::max<uint32_t>(TRI->getSpillSize(*RC), 16);
+  bool isAligned =
+      (Subtarget.getFrameLowering()->getStackAlign() >= Alignment) ||
+      (RI.canRealignStack(MF) && !MFI.isFixedObjectIndex(FrameIdx));
+  unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, Subtarget);
+  addFrameReference(BuildMI(MBB, MI, DebugLoc(), get(Opc)), FrameIdx)
+      .addReg(SrcReg, getKillRegState(isKill));
 }
 
 void Y86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -162,19 +163,20 @@ void Y86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         Register DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI) const {
-    const MachineFunction &MF = *MBB.getParent();
-    const MachineFrameInfo &MFI = MF.getFrameInfo();
-    unsigned Alignment = std::max<uint32_t>(TRI->getSpillSize(*RC), 16);
-    bool isAligned =
-        (Subtarget.getFrameLowering()->getStackAlign() >= Alignment) ||
-        (RI.canRealignStack(MF) && !MFI.isFixedObjectIndex(FrameIdx));
-    unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, Subtarget);
-    /* addFrameReference(BuildMI(MBB, MI, DebugLoc(), get(Opc), DestReg),
-                      FrameIdx);*/
+  const MachineFunction &MF = *MBB.getParent();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  unsigned Alignment = std::max<uint32_t>(TRI->getSpillSize(*RC), 16);
+  bool isAligned =
+      (Subtarget.getFrameLowering()->getStackAlign() >= Alignment) ||
+      (RI.canRealignStack(MF) && !MFI.isFixedObjectIndex(FrameIdx));
+  unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, Subtarget);
+  addFrameReference(BuildMI(MBB, MI, DebugLoc(), get(Opc), DestReg), FrameIdx);
 }
 
 bool Y86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
-    return false;
+
+  llvm_unreachable("unimplemented");
+  return false;
 }
 
 /* MCInst Y86InstrInfo::getNop() const {
