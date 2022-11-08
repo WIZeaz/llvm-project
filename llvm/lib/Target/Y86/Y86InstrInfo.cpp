@@ -110,11 +110,11 @@ static unsigned getLoadStoreRegOpcode(Register Reg,
     llvm_unreachable("Unknown spill size");
   case 1:
     assert(Y86::GR8RegClass.hasSubClassEq(RC) && "Unknown 1-byte regclass");
-    if (STI.is64Bit())
+    //if (STI.is64Bit())
       // Copying to or from a physical H register on Y86-64 requires a NOREX
       // move.  Otherwise use a normal move.
-      if (isHReg(Reg) || Y86::GR8_ABCD_HRegClass.hasSubClassEq(RC))
-        return load ? Y86::MOV8rm_NOREX : Y86::MOV8mr_NOREX;
+      //if (isHReg(Reg) || Y86::GR8_ABCD_HRegClass.hasSubClassEq(RC))
+      //  return load ? Y86::MOV8rm_NOREX : Y86::MOV8mr_NOREX;
     return load ? Y86::MOV8rm : Y86::MOV8mr;
   case 2:
     assert(Y86::GR16RegClass.hasSubClassEq(RC) && "Unknown 2-byte regclass");

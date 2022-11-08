@@ -36,11 +36,16 @@ public:
   void emitPrefix(const MCInst &MI, raw_ostream &OS,
                   const MCSubtargetInfo &STI) const override;
 
+
+
   void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 
 private:
+  void emitOpcode(const MCInst &MI, raw_ostream &OS,
+                                    const MCSubtargetInfo &STI) const;
+  unsigned getRegNum(const MCOperand &MO) const
   /* unsigned getY86RegNum(const MCOperand &MO) const;
 
   unsigned getY86RegEncoding(const MCInst &MI, unsigned OpNum) const;

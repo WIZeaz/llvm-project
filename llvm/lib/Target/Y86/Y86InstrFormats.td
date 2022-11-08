@@ -12,11 +12,10 @@ def Pseudo         : Format<0>;
 def FormO          : Format<1>;
 def FormRI         : Format<2>;
 def FormRM         : Format<3>; 
-def FormRR         : Format<4>;
-def FormMR         : Format<5>;
-def FormMI         : Format<6>;
-def FormOr         : Format<7>;
-def FormOrI        : Format<8>;
+def FormMR         : Format<4>;
+def FormMI         : Format<5>;
+def FormOr         : Format<6>;
+def FormOrI        : Format<7>;
 
 
 def MRM0r : MRM_Format<0>; def MRM1r : MRM_Format<1>; def MRM2r : MRM_Format<2>; def MRM3r : MRM_Format<3>; 
@@ -27,7 +26,7 @@ def MRM4m : MRM_Format<13>; def MRM5m : MRM_Format<14>; def MRM6m : MRM_Format<1
 
 def MRMrr : MRM_Format<17>;
 def MRMrm : MRM_Format<18>;
-def NoMRM : MRM_Format<100>;
+def NoMRM : MRM_Format<19>;
 
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our
@@ -62,17 +61,23 @@ class OpSize32 { OperandSize OpSize = OpSize32; }
 class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins, string asmstr,
      list<dag> pattern=[]>: Instruction{
     let Namespace="Y86";
-    bits<8> opcode=op;
-    Format form=f;
-    MRM_Format mrm_form=mrm;
+    bits<8> Opcode=op;
+    Format Form=f;
+    MRM_Format MRMForm=mrm;
+    ImmType ImmTy=i;
     dag OutOperandList = outs;
     dag InOperandList = ins;
     string AsmString = asmstr;
     let Pattern=pattern;
     OperandSize OpSize = OpSizeFixed; // Does this instruction's encoding change
                                       // based on operand size of the mode?
-    bit hasREX_WPrefix  = 0;  // Does this inst require the REX.W prefix?
     bits<2> OpSizeBits = OpSize.Value;
+
+    // set TSFlags
+    let TSFlags{3-0}=Form.Value;
+    let TSFlags{10-4}=MRMForm.Value;
+    let TSFlags{14-11}=ImmTy.Value;
+    let TSFlags{22-15}=Opcode;
 }
 
 class PseudoI<dag outs, dag ins, list<dag> pattern>:

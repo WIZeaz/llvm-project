@@ -152,7 +152,7 @@ def i32immSExt8_su : PatLeaf<(i32immSExt8), [{
 }]>;
 
 
-let SchedRW = [WriteStore] in {
+/* let SchedRW = [WriteStore] in {
 def MOV8mi  : Ii8 <0xC6, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
                    [(store (i8 imm_su:$src), addr:$dst)]>;
@@ -162,7 +162,7 @@ def MOV16mi : Ii16<0xC7, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src),
 def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(store (i32 imm_su:$src), addr:$dst)]>, OpSize32;
-} // SchedRW */
+} // SchedRW */ 
 
 let isAsCheapAsAMove = 1, isMoveImm = 1 in {
 def MOV8ri  : Ii8 <0xB0, FormOrI, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
@@ -227,14 +227,14 @@ let mayLoad = 1, SchedRW = [WriteLoad] in {
 def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop{w}\t$reg", []>,
                 OpSize16;
 def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>,
-                OpSize32/* , Requires<[Not64BitMode] */>;
+                OpSize32/* , Requires<[Not64BitMode]>*/;
 }
 
 let mayStore = 1, SchedRW = [WriteStore] in {
 def PUSH16r  : I<0x50, FormOr, NoMRM, (outs), (ins GR16:$reg), "push{w}\t$reg",[]>,
                  OpSize16;
 def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>,
-                 OpSize32/* , Requires<[Not64BitMode] */>;    
+                 OpSize32/* , Requires<[Not64BitMode]>*/;    
 }
 
 }

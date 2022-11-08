@@ -383,10 +383,6 @@ const char *Y86TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "Y86ISD::CALL";
   case Y86ISD::RET_FLAG:
     return "Y86ISD::RET_FLAG";
-  case Y86ISD::ADD:
-    return "Y86ISD::ADD";
-  case Y86ISD::SUB:
-    return "Y68ISD::SUB";
   default:
     return "Y86ISD::unknown";
   }
