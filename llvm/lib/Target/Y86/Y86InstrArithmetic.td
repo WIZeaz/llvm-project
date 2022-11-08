@@ -1,3 +1,8 @@
+//ADDri ADDrr ADDrm
+let Constraints = "$src = $dst"{
+def ADD8ri: Ii32<0x02, FormRI, MRMrm, Imm8, (outs GR8:$dst), (ins GR8:$src, imm8:$imm),
+                  "add\t$src, $imm",[(set GR)]>;
+
 /// Y86TypeInfo - This is a bunch of information that describes relevant Y86
 /// information about value types.  For example, it can tell you what the
 /// register class and preferred load to use.

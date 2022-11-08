@@ -97,11 +97,11 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
 }]>;
 
 let hasSideEffects = 0, isMoveReg = 1, SchedRW = [WriteMove] in {
-def MOV8rr  : I<0x88, MRMDestReg, (outs GR8 :$dst), (ins GR8 :$src),
+def MOV8rr  : I<0x88, FormMR, MRMrr, (outs GR8 :$dst), (ins GR8 :$src),
               "mov{b}\t{$src, $dst|$dst, $src}", []>;
-def MOV16rr : I<0x89, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
+def MOV16rr : I<0x89, FormMR, MRMrr, (outs GR16:$dst), (ins GR16:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize16;
-def MOV32rr : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
+def MOV32rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>, OpSize32;
 }
 
@@ -165,37 +165,37 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
 } // SchedRW */
 
 let isAsCheapAsAMove = 1, isMoveImm = 1 in {
-def MOV8ri  : Ii8 <0xB0, AddRegFrm, (outs GR8 :$dst), (ins i8imm :$src),
+def MOV8ri  : Ii8 <0xB0, FormOrI, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
                    [(set GR8:$dst, imm:$src)]>;
-def MOV16ri : Ii16<0xB8, AddRegFrm, (outs GR16:$dst), (ins i16imm:$src),
+def MOV16ri : Ii16<0xB8, FormOrI, NoMRM, (outs GR16:$dst), (ins i16imm:$src),
                    "mov{w}\t{$src, $dst|$dst, $src}",
                    [(set GR16:$dst, imm:$src)]>, OpSize16;
-def MOV32ri : Ii32<0xB8, AddRegFrm, (outs GR32:$dst), (ins i32imm:$src),
+def MOV32ri : Ii32<0xB8, FormOrI, NoMRM, (outs GR32:$dst), (ins i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, imm:$src)]>, OpSize32;
 }
 
 let canFoldAsLoad = 1, isReMaterializable = 1, SchedRW = [WriteLoad] in {
-def MOV8rm  : I<0x8A, MRMSrcMem, (outs GR8 :$dst), (ins i8mem :$src),
+def MOV8rm  : I<0x8A, FormRM, MRMrm, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
                 [(set GR8:$dst, (loadi8 addr:$src))]>;
-def MOV16rm : I<0x8B, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
+def MOV16rm : I<0x8B, FormRM, MRMrm, (outs GR16:$dst), (ins i16mem:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}",
                 [(set GR16:$dst, (loadi16 addr:$src))]>, OpSize16;
-def MOV32rm : I<0x8B, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
+def MOV32rm : I<0x8B, FormRM, MRMrm, (outs GR32:$dst), (ins i32mem:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 [(set GR32:$dst, (loadi32 addr:$src))]>, OpSize32;
 }
 
 let SchedRW = [WriteStore] in {
-def MOV8mr  : I<0x88, MRMDestMem, (outs), (ins i8mem :$dst, GR8 :$src),
+def MOV8mr  : I<0x88, FormMR, MRMrm, (outs), (ins i8mem :$dst, GR8 :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
                 [(store GR8:$src, addr:$dst)]>;
-def MOV16mr : I<0x89, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
+def MOV16mr : I<0x89, FormMR, MRMrm, (outs), (ins i16mem:$dst, GR16:$src),
                 "mov{w}\t{$src, $dst|$dst, $src}",
                 [(store GR16:$src, addr:$dst)]>, OpSize16;
-def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
+def MOV32mr : I<0x89, FormMR, MRMrm, (outs), (ins i32mem:$dst, GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}",
                 [(store GR32:$src, addr:$dst)]>, OpSize32;
 } // SchedRW
@@ -203,7 +203,7 @@ def MOV32mr : I<0x89, MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src),
 // Versions of MOV8rr, MOV8mr, and MOV8rm that use i8mem_NOREX and GR8_NOREX so
 // that they can be used for copying and storing h registers, which can't be
 // encoded when a REX prefix is present.
-let isCodeGenOnly = 1 in {
+/* let isCodeGenOnly = 1 in {
 let hasSideEffects = 0, isMoveReg = 1 in
 def MOV8rr_NOREX : I<0x88, MRMDestReg,
                      (outs GR8_NOREX:$dst), (ins GR8_NOREX:$src),
@@ -220,26 +220,21 @@ def MOV8rm_NOREX : I<0x8A, MRMSrcMem,
                      (outs GR8_NOREX:$dst), (ins i8mem_NOREX:$src),
                      "mov{b}\t{$src, $dst|$dst, $src}", []>,
                      Sched<[WriteLoad]>;
-}
+} */
 
 let Defs = [ESP], Uses = [ESP], hasSideEffects=0 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
-def POP16r  : I<0x58, AddRegFrm, (outs GR16:$reg), (ins), "pop{w}\t$reg", []>,
+def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop{w}\t$reg", []>,
                 OpSize16;
-def POP32r  : I<0x58, AddRegFrm, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>,
-                OpSize32, Requires<[Not64BitMode]>;
+def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>,
+                OpSize32/* , Requires<[Not64BitMode] */>;
 }
 
 let mayStore = 1, SchedRW = [WriteStore] in {
-def PUSH16r  : I<0x50, AddRegFrm, (outs), (ins GR16:$reg), "push{w}\t$reg",[]>,
+def PUSH16r  : I<0x50, FormOr, NoMRM, (outs), (ins GR16:$reg), "push{w}\t$reg",[]>,
                  OpSize16;
-def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>,
-                 OpSize32, Requires<[Not64BitMode]>;    
-def PUSHi16  : Ii16<0x68, RawFrm, (outs), (ins i16imm:$imm),
-                   "push{w}\t$imm", []>, OpSize16;
-def PUSHi32  : Ii32<0x68, RawFrm, (outs), (ins i32imm:$imm),
-                   "push{l}\t$imm", []>, OpSize32,
-                   Requires<[Not64BitMode]>;
+def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>,
+                 OpSize32/* , Requires<[Not64BitMode] */>;    
 }
 
 }
