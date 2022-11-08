@@ -31,6 +31,8 @@ public:
     return "Y86 DAG->DAG Pattern Instruction Selection";
   }
 
+  bool shouldAvoidImmediateInstFormsForSize(SDNode *N) const;
+
   // bool runOnMachineFunction(MachineFunction &MF) override;
 
 protected:

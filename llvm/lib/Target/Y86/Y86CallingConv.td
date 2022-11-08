@@ -1,7 +1,7 @@
 
 
 // Return-value conventions common to all Y86 CC's.
-def RetCC_Y86Common : CallingConv<[
+def RetCC_Y86Common: CallingConv<[
   // Scalar values are returned in AX first, then DX.  For i8, the ABI
   // requires the values to be in AL and AH, however this code uses AL and DL
   // instead. This is because using AH for the second register conflicts with
@@ -20,7 +20,7 @@ def RetCC_Y86Common : CallingConv<[
 ]>;
 
 // Y86-32 FastCC return-value convention.
-def RetCC_Y86_Fast : CallingConv<[
+/* def RetCC_Y86_Fast : CallingConv<[
 
   // For integers, ECX can be used as an extra return register
   CCIfType<[i8],  CCAssignToReg<[AL, DL, CL]>>,
@@ -30,7 +30,7 @@ def RetCC_Y86_Fast : CallingConv<[
   // Otherwise, it is the same as the common Y86 calling convention.
   CCDelegateTo<RetCC_Y86Common>
 ]>;
-
+ */
 // This is the root return-value convention for the Y86-32 backend.
 def RetCC_Y86 : CallingConv<[
   CCDelegateTo<RetCC_Y86Common>

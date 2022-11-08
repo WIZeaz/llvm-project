@@ -90,12 +90,10 @@ BitVector Y86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           int SPAdj, unsigned FIOperandNum,
                                           RegScavenger *RS) const {
-  /* MachineInstr &MI = *II;
+  MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
-  bool IsEHFuncletEpilogue =
-      MBBI == MBB.end() ? false : isFuncletReturnInstr(*MBBI);
   const Y86FrameLowering *TFI = getFrameLowering(MF);
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
 
@@ -103,11 +101,12 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   int FIOffset;
   Register BasePtr;
   if (MI.isReturn()) {
-    assert((!hasStackRealignment(MF) ||
+    llvm_unreachable("MI should not be ret");
+    /* assert((!hasStackRealignment(MF) ||
             MF.getFrameInfo().isFixedObjectIndex(FrameIndex)) &&
            "Return instruction can only reference SP relative frame objects");
     FIOffset =
-        TFI->getFrameIndexReferenceSP(MF, FrameIndex, BasePtr, 0).getFixed();
+        TFI->getFrameIndexReferenceSP(MF, FrameIndex, BasePtr, 0).getFixed(); */
   } else {
     FIOffset = TFI->getFrameIndexReference(MF, FrameIndex, BasePtr).getFixed();
   }
@@ -129,8 +128,6 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // 32-bits. It saves one byte per lea in code since 0x67 prefix is avoided.
   // Don't change BasePtr since it is used later for stack adjustment.
   Register MachineBasePtr = BasePtr;
-  if (Opc == Y86::LEA64_32r && Y86::GR32RegClass.contains(BasePtr))
-    MachineBasePtr = getY86SubSuperRegister(BasePtr, 64);
 
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register.  Add an offset to the offset.
@@ -152,17 +149,16 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Offset is a 32-bit integer.
     int Imm = (int)(MI.getOperand(FIOperandNum + 3).getImm());
     int Offset = FIOffset + Imm;
-    assert((!Is64Bit || isInt<32>((long long)FIOffset + Imm)) &&
-           "Requesting 64-bit offset in 32-bit immediate!");
-    if (Offset != 0 || !tryOptimizeLEAtoMOV(II))
+    /* assert((!Is64Bit || isInt<32>((long long)FIOffset + Imm)) &&
+           "Requesting 64-bit offset in 32-bit immediate!"); */
+    if (Offset != 0)
       MI.getOperand(FIOperandNum + 3).ChangeToImmediate(Offset);
   } else {
     // Offset is symbolic. This is extremely rare.
     uint64_t Offset =
         FIOffset + (uint64_t)MI.getOperand(FIOperandNum + 3).getOffset();
     MI.getOperand(FIOperandNum + 3).setOffset(Offset);
-  } */
-  llvm_unreachable("unimplemented");
+  } 
 }
 
 bool Y86RegisterInfo::requiresRegisterScavenging(

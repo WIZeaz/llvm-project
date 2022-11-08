@@ -97,19 +97,21 @@ def DI : Y86Reg<"di", 7, [DIL,DIH]>;
 def BP : Y86Reg<"bp", 5, [BPL,BPH]>;
 def SP : Y86Reg<"sp", 4, [SPL,SPH]>;
 }
+
 def IP : Y86Reg<"ip", 0>;
 
+// def Undef: Y86Reg<"undef",9>, DwarfRegNum<[9]>;
 // 32-bit registers
 let SubRegIndices = [sub_16bit, sub_16bit_hi], CoveredBySubRegs = 1 in {
-def EAX : Y86Reg<"eax", 0, [AX, HAX]>/* , DwarfRegNum<[-2, 0, 0]> */;
-def EDX : Y86Reg<"edx", 2, [DX, HDX]>/* , DwarfRegNum<[-2, 2, 2]> */;
-def ECX : Y86Reg<"ecx", 1, [CX, HCX]>/* , DwarfRegNum<[-2, 1, 1]> */;
-def EBX : Y86Reg<"ebx", 3, [BX, HBX]>/* , DwarfRegNum<[-2, 3, 3]> */;
-def ESI : Y86Reg<"esi", 6, [SI, HSI]>/* , DwarfRegNum<[-2, 6, 6]> */;
-def EDI : Y86Reg<"edi", 7, [DI, HDI]>/* , DwarfRegNum<[-2, 7, 7]> */;
-def EBP : Y86Reg<"ebp", 5, [BP, HBP]>/* , DwarfRegNum<[-2, 4, 5]> */;
-def ESP : Y86Reg<"esp", 4, [SP, HSP]>/* , DwarfRegNum<[-2, 5, 4]> */;
-def EIP : Y86Reg<"eip", 0, [IP, HIP]>/* , DwarfRegNum<[-2, 8, 8]> */;
+def EAX : Y86Reg<"eax", 0, [AX, HAX]>, DwarfRegNum<[/* -2, 0, */ 0]>;
+def EDX : Y86Reg<"edx", 2, [DX, HDX]>, DwarfRegNum<[/* -2, 2, */ 2]>;
+def ECX : Y86Reg<"ecx", 1, [CX, HCX]>, DwarfRegNum<[/* -2, 1, */ 1]>;
+def EBX : Y86Reg<"ebx", 3, [BX, HBX]>, DwarfRegNum<[/* -2, 3, */ 3]>;
+def ESI : Y86Reg<"esi", 6, [SI, HSI]>, DwarfRegNum<[/* -2, 6, */ 6]>;
+def EDI : Y86Reg<"edi", 7, [DI, HDI]>, DwarfRegNum<[/* -2, 7, */ 7]>;
+def EBP : Y86Reg<"ebp", 5, [BP, HBP]>, DwarfRegNum<[/* -2, 4, */ 5]>;
+def ESP : Y86Reg<"esp", 4, [SP, HSP]>, DwarfRegNum<[/* -2, 5, */ 4]>;
+def EIP : Y86Reg<"eip", 0, [IP, HIP]>, DwarfRegNum<[/* -2, 8, */ 8]>;
 }
 
 

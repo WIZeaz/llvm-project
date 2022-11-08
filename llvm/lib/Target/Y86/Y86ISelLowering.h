@@ -27,6 +27,8 @@ enum NodeType : unsigned {
   FIRST_NUMBER = ISD::BUILTIN_OP_END,
   CALL,
   RET_FLAG,
+  ADD,
+  SUB
 };
 } // namespace Y86ISD
 

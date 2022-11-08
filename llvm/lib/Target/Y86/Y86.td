@@ -5,11 +5,11 @@ include "llvm/Target/Target.td"
 //===----------------------------------------------------------------------===//
 
 include "Y86RegisterInfo.td"
+include "Y86CallingConv.td"
 include "Y86Schedule.td"
 include "Y86InstrFormats.td"
 include "Y86InstrInfo.td"
 include "Y86InstrArithmetic.td"
-include "Y86CallingConv.td"
 
 def Y86InstrInfo : InstrInfo;
 

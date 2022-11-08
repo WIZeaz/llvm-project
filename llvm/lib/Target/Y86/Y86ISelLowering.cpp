@@ -61,7 +61,7 @@ SDValue Y86TargetLowering::LowerFormalArguments(
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
 
- // CCInfo.AllocateStack(32, Align(8));
+  // CCInfo.AllocateStack(32, Align(8));
   CCInfo.AnalyzeArguments(Ins, CC_Y86);
 
   // The next loop assumes that the locations are in the same order of the
@@ -142,8 +142,8 @@ SDValue Y86TargetLowering::LowerFormalArguments(
     VarArgsLoweringHelper(FuncInfo, dl, DAG, Subtarget, CallConv, CCInfo)
         .lowerVarArgsParameters(Chain, StackSize); */
 
-  //FuncInfo->setBytesToPopOnReturn(0);
-  //FuncInfo->setArgumentStackSize(StackSize);
+  // FuncInfo->setBytesToPopOnReturn(0);
+  // FuncInfo->setArgumentStackSize(StackSize);
 
   return Chain;
 }
@@ -383,6 +383,10 @@ const char *Y86TargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "Y86ISD::CALL";
   case Y86ISD::RET_FLAG:
     return "Y86ISD::RET_FLAG";
+  case Y86ISD::ADD:
+    return "Y86ISD::ADD";
+  case Y86ISD::SUB:
+    return "Y68ISD::SUB";
   default:
     return "Y86ISD::unknown";
   }

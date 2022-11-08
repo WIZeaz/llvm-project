@@ -110,5 +110,5 @@ bool Y86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
 
 std::unique_ptr<MCObjectTargetWriter>
 Y86AsmBackend::createObjectTargetWriter() const {
-  return createY86ELFObjectWriter(/*IsELF64*/ false, OSABI, ELF::EM_X86_64);
+  return createY86ELFObjectWriter(/*IsELF64*/ false, OSABI, ELF::EM_860);
 }

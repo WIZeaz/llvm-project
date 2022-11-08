@@ -174,8 +174,6 @@ void Y86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 bool Y86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
-
-  llvm_unreachable("unimplemented");
   return false;
 }
 

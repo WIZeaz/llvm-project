@@ -54,6 +54,10 @@ void Y86DAGToDAGISel::Select(SDNode *Node) {
   SelectCode(Node);
 }
 
+bool Y86DAGToDAGISel::shouldAvoidImmediateInstFormsForSize(SDNode *N) const{
+  return false;
+}
+
 /// Returns true if it is able to pattern match an addressing mode.
 /// It returns the operands which make up the maximal addressing mode it can
 /// match by reference.

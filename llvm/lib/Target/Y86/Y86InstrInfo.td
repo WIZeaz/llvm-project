@@ -1,9 +1,19 @@
+
 def Not64BitMode : Predicate<"(true)">;
 
 def SDTY86Ret     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
 
+def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
+                                            [SDTCisSameAs<0, 2>,
+                                             SDTCisSameAs<0, 3>,
+                                             SDTCisInt<0>, SDTCisVT<1, i32>]>;
+
 def Y86retflag : SDNode<"Y86ISD::RET_FLAG", SDTY86Ret,
                         [SDNPHasChain, SDNPOptInGlue, SDNPVariadic]>;
+
+def Y86add_flag  : SDNode<"Y86ISD::ADD",  SDTBinaryArithWithFlags,
+                          [SDNPCommutative]>;
+def Y86sub_flag  : SDNode<"Y86ISD::SUB",  SDTBinaryArithWithFlags>;
 
 def RET  : PseudoI<(outs), (ins i32imm:$adj, variable_ops), [(Y86retflag timm:$adj)]>;
 
@@ -95,9 +105,52 @@ def MOV32rr : I<0x89, MRMDestReg, (outs GR32:$dst), (ins GR32:$src),
                 "mov{l}\t{$src, $dst|$dst, $src}", []>, OpSize32;
 }
 
-/* def imm_su : PatLeaf<(imm), [{
+def imm_su : PatLeaf<(imm), [{
+  return !shouldAvoidImmediateInstFormsForSize(N);
+}]>;
+
+class ImmSExtAsmOperandClass : AsmOperandClass {
+  let SuperClasses = [ImmAsmOperand];
+  let RenderMethod = "addImmOperands";
+}
+
+// [0, 0x0000007F] | [0x000000000000FF80, 0x000000000000FFFF] |
+//   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
+def ImmSExti16i8AsmOperand : ImmSExtAsmOperandClass {
+  let Name = "ImmSExti16i8";
+  //let SuperClasses = [ImmSExti64i32AsmOperand];
+}
+
+// [0, 0x0000007F] | [0x00000000FFFFFF80, 0x00000000FFFFFFFF] |
+//   [0xFFFFFFFFFFFFFF80, 0xFFFFFFFFFFFFFFFF]
+def ImmSExti32i8AsmOperand : ImmSExtAsmOperandClass {
+  let Name = "ImmSExti32i8";
+}
+
+
+// A couple of more descriptive operand definitions.
+// 16-bits but only 8 bits are significant.
+def i16i8imm  : Operand<i16> {
+  let ParserMatchClass = ImmSExti16i8AsmOperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
+// 32-bits but only 8 bits are significant.
+def i32i8imm  : Operand<i32> {
+  let ParserMatchClass = ImmSExti32i8AsmOperand;
+  let OperandType = "OPERAND_IMMEDIATE";
+}
+
+def i16immSExt8  : ImmLeaf<i16, [{ return isInt<8>(Imm); }]>;
+def i32immSExt8  : ImmLeaf<i32, [{ return isInt<8>(Imm); }]>;
+
+def i16immSExt8_su : PatLeaf<(i16immSExt8), [{
     return !shouldAvoidImmediateInstFormsForSize(N);
 }]>;
+def i32immSExt8_su : PatLeaf<(i32immSExt8), [{
+    return !shouldAvoidImmediateInstFormsForSize(N);
+}]>;
+
 
 let SchedRW = [WriteStore] in {
 def MOV8mi  : Ii8 <0xC6, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src),

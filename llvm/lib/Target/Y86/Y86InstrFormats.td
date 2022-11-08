@@ -101,10 +101,15 @@ class Y86Inst<bits<8> op, Format f, ImmType i, dag outs, dag ins, string asmstr,
     let Namespace="Y86";
     bits<8> opcode=op;
     Format form=f;
+    ImmType ImmT = i;
     dag OutOperandList = outs;
     dag InOperandList = ins;
     string AsmString = asmstr;
     let Pattern=pattern;
+    OperandSize OpSize = OpSizeFixed; // Does this instruction's encoding change
+                                      // based on operand size of the mode?
+    bit hasREX_WPrefix  = 0;  // Does this inst require the REX.W prefix?
+    bits<2> OpSizeBits = OpSize.Value;
 }
 
 class PseudoI<dag outs, dag ins, list<dag> pattern>:
