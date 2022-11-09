@@ -15,8 +15,6 @@ def Y86add_flag  : SDNode<"Y86ISD::ADD",  SDTBinaryArithWithFlags,
                           [SDNPCommutative]>;
 def Y86sub_flag  : SDNode<"Y86ISD::SUB",  SDTBinaryArithWithFlags>;
 
-def RET  : PseudoI<(outs), (ins i32imm:$adj, variable_ops), [(Y86retflag timm:$adj)]>;
-
 // A version of ptr_rc which excludes SP, ESP, and RSP. This is used for
 // the index operand of an address, to conform to x86 encoding restrictions.
 def ptr_rc_nosp : PointerLikeRegClass<1>;
@@ -96,15 +94,6 @@ def loadi32 : PatFrag<(ops node:$ptr), (i32 (unindexedload node:$ptr)), [{
   return false;
 }]>;
 
-let hasSideEffects = 0, isMoveReg = 1, SchedRW = [WriteMove] in {
-def MOV8rr  : I<0x88, FormMR, MRMrr, (outs GR8 :$dst), (ins GR8 :$src),
-              "mov{b}\t{$src, $dst|$dst, $src}", []>;
-def MOV16rr : I<0x89, FormMR, MRMrr, (outs GR16:$dst), (ins GR16:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize16;
-def MOV32rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>, OpSize32;
-}
-
 def imm_su : PatLeaf<(imm), [{
   return !shouldAvoidImmediateInstFormsForSize(N);
 }]>;
@@ -164,14 +153,26 @@ def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
                    [(store (i32 imm_su:$src), addr:$dst)]>, OpSize32;
 } // SchedRW */ 
 
+let hasSideEffects = 0, isMoveReg = 1, SchedRW = [WriteMove] in {
+def MOV8rr  : I<0x88, FormMR, MRMrr, (outs GR8 :$dst), (ins GR8 :$src),
+              "mov{b}\t{$src, $dst|$dst, $src}", []>;
+def MOV16rr : I<0x89, FormMR, MRMrr, (outs GR16:$dst), (ins GR16:$src),
+                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize16;
+def MOV32rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
+                "mov{l}\t{$src, $dst|$dst, $src}", []>, OpSize32;
+// workaround for running in 64bitsMode
+def MOV64rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
+                 "mov{q}\t{$src, $dst|$dst, $src}", []>, REX_W;
+}
+
 let isAsCheapAsAMove = 1, isMoveImm = 1 in {
-def MOV8ri  : Ii8 <0xB0, FormOrI, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
+def MOV8ri  : Ii8 <0xB0, FormOr, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
                    [(set GR8:$dst, imm:$src)]>;
-def MOV16ri : Ii16<0xB8, FormOrI, NoMRM, (outs GR16:$dst), (ins i16imm:$src),
+def MOV16ri : Ii16<0xB8, FormOr, NoMRM, (outs GR16:$dst), (ins i16imm:$src),
                    "mov{w}\t{$src, $dst|$dst, $src}",
                    [(set GR16:$dst, imm:$src)]>, OpSize16;
-def MOV32ri : Ii32<0xB8, FormOrI, NoMRM, (outs GR32:$dst), (ins i32imm:$src),
+def MOV32ri : Ii32<0xB8, FormOr, NoMRM, (outs GR32:$dst), (ins i32imm:$src),
                    "mov{l}\t{$src, $dst|$dst, $src}",
                    [(set GR32:$dst, imm:$src)]>, OpSize32;
 }
@@ -200,28 +201,6 @@ def MOV32mr : I<0x89, FormMR, MRMrm, (outs), (ins i32mem:$dst, GR32:$src),
                 [(store GR32:$src, addr:$dst)]>, OpSize32;
 } // SchedRW
 
-// Versions of MOV8rr, MOV8mr, and MOV8rm that use i8mem_NOREX and GR8_NOREX so
-// that they can be used for copying and storing h registers, which can't be
-// encoded when a REX prefix is present.
-/* let isCodeGenOnly = 1 in {
-let hasSideEffects = 0, isMoveReg = 1 in
-def MOV8rr_NOREX : I<0x88, MRMDestReg,
-                     (outs GR8_NOREX:$dst), (ins GR8_NOREX:$src),
-                     "mov{b}\t{$src, $dst|$dst, $src}", []>,
-                   Sched<[WriteMove]>;
-let mayStore = 1, hasSideEffects = 0 in
-def MOV8mr_NOREX : I<0x88, MRMDestMem,
-                     (outs), (ins i8mem_NOREX:$dst, GR8_NOREX:$src),
-                     "mov{b}\t{$src, $dst|$dst, $src}", []>,
-                     Sched<[WriteStore]>;
-let mayLoad = 1, hasSideEffects = 0,
-    canFoldAsLoad = 1, isReMaterializable = 1 in
-def MOV8rm_NOREX : I<0x8A, MRMSrcMem,
-                     (outs GR8_NOREX:$dst), (ins i8mem_NOREX:$src),
-                     "mov{b}\t{$src, $dst|$dst, $src}", []>,
-                     Sched<[WriteLoad]>;
-} */
-
 let Defs = [ESP], Uses = [ESP], hasSideEffects=0 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
 def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop{w}\t$reg", []>,
@@ -237,4 +216,14 @@ def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push{l}\t$reg",[
                  OpSize32/* , Requires<[Not64BitMode]>*/;    
 }
 
+}
+
+let isTerminator = 1, isReturn = 1, isBarrier = 1,
+    hasCtrlDep = 1, /*FPForm = SpecialFP,*/ SchedRW = [WriteJumpLd] in {
+  def RET  : PseudoI<(outs), (ins i32imm:$adj, variable_ops), [(Y86retflag timm:$adj)]>;
+
+  def RET32  : I   <0xC3, FormO, NoMRM, (outs), (ins variable_ops),
+                    "ret{l}", []>, OpSize32;
+  def RETI32 : Ii16<0xC2, FormO, NoMRM, (outs), (ins i16imm:$amt, variable_ops),
+                    "ret{l}\t$amt", []>, OpSize32; 
 }

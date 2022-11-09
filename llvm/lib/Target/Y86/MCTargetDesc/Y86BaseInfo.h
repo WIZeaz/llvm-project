@@ -17,6 +17,7 @@
 #define LLVM_LIB_TARGET_Y86_MCTARGETDESC_Y86BASEINFO_H
 
 #include "MCTargetDesc/Y86MCTargetDesc.h"
+#include "llvm/Support/Debug.h"
 
 namespace llvm {
 namespace Y86II {
@@ -28,7 +29,6 @@ namespace Y86II {
         FormMR ,
         FormMI ,
         FormOr ,
-        FormOrI,
     };
 
     enum MRMFormat{
@@ -72,17 +72,39 @@ namespace Y86II {
         return (TSFlags>>15) & getMask(8);
     }
 
+    inline bool hasREX_W(uint64_t TSFlags){
+        return (TSFlags>>23) & 1;
+    }
+
     inline bool isPseudo(uint64_t TSFlags) {
         return getFormat(TSFlags) == Pseudo;
     }
 
     inline bool shouldAddReg(uint64_t TSFlags){
         uint64_t FormBits=getFormat(TSFlags);
-        return FormBits==FormOr || FormBits==FormOrI;
+      return FormBits == FormOr;
     }
 
     inline bool isFormat(uint64_t TSFlags, Y86II::Format form) {
         return getFormat(TSFlags) == form;
+    }
+
+    inline bool hasMem(uint64_t TSFlags){
+        uint64_t MRMFormBits=getMRMFormat(TSFlags);
+        switch (MRMFormBits){
+            case MRM0m:
+            case MRM1m:
+            case MRM2m:
+            case MRM3m:
+            case MRM4m:
+            case MRM5m:
+            case MRM6m:
+            case MRM7m:
+            case MRMrm:
+            return true;
+            default:
+            return false;
+        }
     }
 
     inline uint8_t getExtOpcode(uint64_t TSFlags){

@@ -40,27 +40,31 @@ def RetCC_Y86 : CallingConv<[
 /// CC_Y86_32_Common - In all Y86-32 calling conventions, extra integers and FP
 /// values are spilled on the stack.
 def CC_Y86_Common : CallingConv<[
-  // Handles byval/preallocated parameters.
-  CCIfByVal<CCPassByVal<4, 4>>,
-  CCIfPreallocated<CCPassByVal<4, 4>>,
+  // Handles byval parameters.
+  CCIfByVal<CCPassByVal<8, 8>>,
 
-  // Integer/Float values get stored in stack slots that are 4 bytes in
-  // size and 4-byte aligned.
-  CCIfType<[i32, f32], CCAssignToStack<4, 4>>,
+  // Promote i1/i8/i16/v1i1 arguments to i32.
+  CCIfType<[i1, i8, i16, v1i1], CCPromoteToType<i32>>,
+
+  // Pointers are always passed in full 64-bit registers.
+  //CCIfPtr<CCCustom<"CC_X86_64_Pointer">>,
+
+  // The first 6 integer arguments are passed in integer registers.
+  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX/* , R8D, R9D */]>>,
+
+  // Integer/FP values get stored in stack slots that are 8 bytes in size and
+  // 8-byte aligned if there are no more registers to hold them.
+  CCIfType<[i32, i64, f16, f32, f64], CCAssignToStack<8, 8>>,
 
 ]>;
 
-// X86 C Calling Conv
+// X86-64 C Calling Conv
 def CC_Y86 : CallingConv<[
   // Promote i1/i8/i16/v1i1 arguments to i32.
   CCIfType<[i1, i8, i16, v1i1], CCPromoteToType<i32>>,
 
   // The 'nest' parameter, if any, is passed in ECX.
   CCIfNest<CCAssignToReg<[ECX]>>,
-
-  // On swifttailcc pass swiftself in ECX.
-  CCIfCC<"CallingConv::SwiftTail",
-         CCIfSwiftSelf<CCIfType<[i32], CCAssignToReg<[ECX]>>>>,
 
   // The first 3 integer arguments, if marked 'inreg' and if the call is not
   // a vararg call, are passed in integer registers.

@@ -15,18 +15,16 @@ def FormRM         : Format<3>;
 def FormMR         : Format<4>;
 def FormMI         : Format<5>;
 def FormOr         : Format<6>;
-def FormOrI        : Format<7>;
-
 
 def MRM0r : MRM_Format<0>; def MRM1r : MRM_Format<1>; def MRM2r : MRM_Format<2>; def MRM3r : MRM_Format<3>; 
 def MRM4r : MRM_Format<4>; def MRM5r : MRM_Format<5>; def MRM6r : MRM_Format<6>; def MRM7r : MRM_Format<7>;
 
-def MRM0m : MRM_Format<9>;  def MRM1m : MRM_Format<10>; def MRM2m : MRM_Format<11>; def MRM3m : MRM_Format<12>; 
-def MRM4m : MRM_Format<13>; def MRM5m : MRM_Format<14>; def MRM6m : MRM_Format<15>; def MRM7m : MRM_Format<16>;
+def MRM0m : MRM_Format<8>;  def MRM1m : MRM_Format<9>; def MRM2m : MRM_Format<10>; def MRM3m : MRM_Format<11>; 
+def MRM4m : MRM_Format<12>; def MRM5m : MRM_Format<13>; def MRM6m : MRM_Format<14>; def MRM7m : MRM_Format<15>;
 
-def MRMrr : MRM_Format<17>;
-def MRMrm : MRM_Format<18>;
-def NoMRM : MRM_Format<19>;
+def MRMrr : MRM_Format<16>;
+def MRMrm : MRM_Format<17>;
+def NoMRM : MRM_Format<18>;
 
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our
@@ -58,6 +56,8 @@ def OpSize32     : OperandSize<2>; // Needs 0x66 prefix in 16-bit mode.
 class OpSize16 { OperandSize OpSize = OpSize16; }
 class OpSize32 { OperandSize OpSize = OpSize32; }
 
+class REX_W  { bit HasREX_WPrefix = 1; }
+
 class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins, string asmstr,
      list<dag> pattern=[]>: Instruction{
     let Namespace="Y86";
@@ -69,6 +69,7 @@ class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins
     dag InOperandList = ins;
     string AsmString = asmstr;
     let Pattern=pattern;
+    bit HasREX_WPrefix = 0; 
     OperandSize OpSize = OpSizeFixed; // Does this instruction's encoding change
                                       // based on operand size of the mode?
     bits<2> OpSizeBits = OpSize.Value;
@@ -78,6 +79,7 @@ class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins
     let TSFlags{10-4}=MRMForm.Value;
     let TSFlags{14-11}=ImmTy.Value;
     let TSFlags{22-15}=Opcode;
+    let TSFlags{23-23}=HasREX_WPrefix;
 }
 
 class PseudoI<dag outs, dag ins, list<dag> pattern>:

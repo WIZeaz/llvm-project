@@ -15,13 +15,20 @@
 #ifndef LLVM_LIB_TARGET_Y86_MCTARGETDESC_Y86MCCODEEMITTER_H
 #define LLVM_LIB_TARGET_Y86_MCTARGETDESC_Y86MCCODEEMITTER_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCCodeEmitter.h"
-#include "llvm/Support/DataTypes.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCFixup.h"
+#include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrDesc.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCSymbol.h"
 
 namespace llvm {
 
-class MCInstrInfo;
-class MCContext;
 class Y86MCCodeEmitter : public MCCodeEmitter {
   const MCInstrInfo &MCII;
   MCContext &Ctx;
@@ -36,16 +43,14 @@ public:
   void emitPrefix(const MCInst &MI, raw_ostream &OS,
                   const MCSubtargetInfo &STI) const override;
 
-
-
   void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 
 private:
-  void emitOpcode(const MCInst &MI, raw_ostream &OS,
-                                    const MCSubtargetInfo &STI) const;
-  unsigned getRegNum(const MCOperand &MO) const
+  unsigned getRegEncoding(const MCOperand &MO) const;
+  void emitMemModRMByte(const MCInst &MI, uint64_t TSFlags, uint8_t RegOpcode,
+                        uint8_t OpNo, raw_ostream &OS) const;
   /* unsigned getY86RegNum(const MCOperand &MO) const;
 
   unsigned getY86RegEncoding(const MCInst &MI, unsigned OpNum) const;

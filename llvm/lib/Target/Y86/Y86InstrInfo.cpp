@@ -110,11 +110,11 @@ static unsigned getLoadStoreRegOpcode(Register Reg,
     llvm_unreachable("Unknown spill size");
   case 1:
     assert(Y86::GR8RegClass.hasSubClassEq(RC) && "Unknown 1-byte regclass");
-    //if (STI.is64Bit())
-      // Copying to or from a physical H register on Y86-64 requires a NOREX
-      // move.  Otherwise use a normal move.
-      //if (isHReg(Reg) || Y86::GR8_ABCD_HRegClass.hasSubClassEq(RC))
-      //  return load ? Y86::MOV8rm_NOREX : Y86::MOV8mr_NOREX;
+    // if (STI.is64Bit())
+    //  Copying to or from a physical H register on Y86-64 requires a NOREX
+    //  move.  Otherwise use a normal move.
+    // if (isHReg(Reg) || Y86::GR8_ABCD_HRegClass.hasSubClassEq(RC))
+    //   return load ? Y86::MOV8rm_NOREX : Y86::MOV8mr_NOREX;
     return load ? Y86::MOV8rm : Y86::MOV8mr;
   case 2:
     assert(Y86::GR16RegClass.hasSubClassEq(RC) && "Unknown 2-byte regclass");
@@ -174,6 +174,25 @@ void Y86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 bool Y86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
+  MachineBasicBlock &MBB = *MI.getParent();
+  switch (MI.getOpcode()) {
+  case Y86::RET: {
+    // Adjust stack to erase error code
+    int64_t StackAdj = MI.getOperand(0).getImm();
+    MachineInstrBuilder MIB;
+    if (StackAdj == 0) {
+      MIB = BuildMI(MBB, MI, MI.getDebugLoc(), get(Y86::RET32));
+    } else if (isUInt<16>(StackAdj)) {
+      MIB = BuildMI(MBB, MI, MI.getDebugLoc(), get(Y86::RETI32)).addImm(StackAdj);
+    } else {
+      report_fatal_error("StackAdj is too large");
+    }
+    for (unsigned I = 1, E = MI.getNumOperands(); I != E; ++I)
+      MIB.add(MI.getOperand(I));
+    MBB.erase(MI);
+    return true;
+  }
+  }
   return false;
 }
 

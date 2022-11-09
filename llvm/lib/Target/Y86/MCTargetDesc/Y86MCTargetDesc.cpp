@@ -92,7 +92,7 @@ MCSubtargetInfo *Y86_MC::createY86MCSubtargetInfo(const Triple &TT,
     ArchFS = (Twine(ArchFS) + "," + FS).str();
 
   if (CPU.empty())
-    CPU = "generic";
+    CPU = "y86";
 
   return createY86MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, ArchFS);
 }

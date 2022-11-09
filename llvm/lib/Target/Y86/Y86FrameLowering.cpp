@@ -22,33 +22,33 @@ void Y86FrameLowering::emitPrologue(MachineFunction &MF,
   uint64_t StackSize = MFI.getStackSize();
   DebugLoc DL;
 
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::ESI);
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::EDI);
+  //BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::ESI);
+  //BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::EDI);
   if (hasFP(MF)) {
     BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::EBP);
-    BuildMI(MBB, MBBI, DL, TII.get(Y86::MOV32rr))
+    BuildMI(MBB, MBBI, DL, TII.get(Y86::MOV64rr))
         .addReg(Y86::EBP)
         .addReg(Y86::ESP);
   }
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::SUB32ri))
+  BuildMI(MBB, MBBI, DL, TII.get(Y86::SUB64ri))
       .addReg(Y86::ESP)
       .addImm(StackSize);
 }
 void Y86FrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
-  MachineBasicBlock::iterator MBBI = MBB.begin();
+  MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   uint64_t StackSize = MFI.getStackSize();
   DebugLoc DL;
 
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::ADD32ri))
+  BuildMI(MBB, MBBI, DL, TII.get(Y86::ADD64ri))
       .addReg(Y86::ESP)
       .addImm(StackSize);
   if (hasFP(MF)) {
     BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::EBP);
   }
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::EDI);
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::ESI);
+  //BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::EDI);
+  //BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::ESI);
 
 
 }
