@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Y86RegisterInfo.h"
-#include "Y86Subtarget.h"
 #include "MCTargetDesc/Y86MCTargetDesc.h"
+#include "Y86Subtarget.h"
 // #include "Y86MachineFunction.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
@@ -21,6 +21,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include <iostream>
 
 using namespace llvm;
 
@@ -31,11 +32,10 @@ using namespace llvm;
 
 Y86RegisterInfo::Y86RegisterInfo(const Y86Subtarget &ST)
     : Y86GenRegisterInfo(Y86::EIP), Subtarget(ST) {
+  SlotSize = 8;
   StackPtr = Y86::ESP;
-  BasePtr = Y86::EBX;
-  //auto TFI = ST.getFrameLowering();
- // if (TFI->hasFP())
   FramePtr = Y86::EBP;
+  BasePtr = Y86::EBX;
 }
 
 const TargetRegisterClass *
@@ -63,7 +63,7 @@ BitVector Y86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(SubReg);
 
   // Set the Shadow Stack Pointer as reserved.
- // Reserved.set(Y86::SSP);
+  // Reserved.set(Y86::SSP);
 
   // Set the instruction pointer register and its aliases as reserved.
   for (const MCPhysReg &SubReg : subregs_inclusive(Y86::EIP))
@@ -90,13 +90,15 @@ BitVector Y86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           int SPAdj, unsigned FIOperandNum,
                                           RegScavenger *RS) const {
+  // llvm_unreachable("???");
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   const Y86FrameLowering *TFI = getFrameLowering(MF);
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
-
+  std::cerr << "=====\n";
+  MI.dump();
   // Determine base register and offset.
   int FIOffset;
   Register BasePtr;
@@ -158,7 +160,9 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     uint64_t Offset =
         FIOffset + (uint64_t)MI.getOperand(FIOperandNum + 3).getOffset();
     MI.getOperand(FIOperandNum + 3).setOffset(Offset);
-  } 
+  }
+  MI.dump();
+  std::cerr << "=====\n";
 }
 
 bool Y86RegisterInfo::requiresRegisterScavenging(
