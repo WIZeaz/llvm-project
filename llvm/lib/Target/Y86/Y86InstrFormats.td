@@ -57,6 +57,7 @@ class OpSize16 { OperandSize OpSize = OpSize16; }
 class OpSize32 { OperandSize OpSize = OpSize32; }
 
 class REX_W  { bit HasREX_WPrefix = 1; }
+class BinOP  { bit BinOP = 1; }
 
 class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins, string asmstr,
      list<dag> pattern=[]>: Instruction{
@@ -70,6 +71,7 @@ class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins
     string AsmString = asmstr;
     let Pattern=pattern;
     bit HasREX_WPrefix = 0; 
+    bit BinOP=0;
     OperandSize OpSize = OpSizeFixed; // Does this instruction's encoding change
                                       // based on operand size of the mode?
     bits<2> OpSizeBits = OpSize.Value;
@@ -80,6 +82,7 @@ class Y86Inst<bits<8> op, Format f, MRM_Format mrm, ImmType i, dag outs, dag ins
     let TSFlags{14-11}=ImmTy.Value;
     let TSFlags{22-15}=Opcode;
     let TSFlags{23-23}=HasREX_WPrefix;
+    let TSFlags{24-24}=BinOP;
 }
 
 class PseudoI<dag outs, dag ins, list<dag> pattern>:

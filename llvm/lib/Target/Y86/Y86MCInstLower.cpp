@@ -30,18 +30,10 @@ Y86MCInstLower::LowerOperand(const MachineOperand &MO) const {
     return MCOperand::createImm(MO.getImm());
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
-    return LowerSymbolOperand(MO /* , GetSymbolFromOperand(MO) */);
   case MachineOperand::MO_MCSymbol:
-    return LowerSymbolOperand(MO /* , MO.getMCSymbol() */);
   case MachineOperand::MO_JumpTableIndex:
-    return LowerSymbolOperand(
-        MO /* , AsmPrinter.GetJTISymbol(MO.getIndex()) */);
   case MachineOperand::MO_ConstantPoolIndex:
-    return LowerSymbolOperand(
-        MO /* , AsmPrinter.GetCPISymbol(MO.getIndex()) */);
   case MachineOperand::MO_BlockAddress:
-    return LowerSymbolOperand(
-        MO/* , this->AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()) */);
   case MachineOperand::MO_RegisterMask:
     // Ignore call clobbers.
     return None;
@@ -50,9 +42,5 @@ Y86MCInstLower::LowerOperand(const MachineOperand &MO) const {
 
 MCOperand Y86MCInstLower::LowerSymbolOperand(const MachineOperand &MO) const {
   llvm_unreachable("LowerSymbolOperand is not implemented!");
-  // FIXME: We would like an efficient form for this, so we don't have to do a
-  // lot of extra uniquing.
-  const MCExpr *Expr = nullptr;
-  MCSymbolRefExpr::VariantKind RefKind = MCSymbolRefExpr::VK_None;
   return MCOperand();
 }

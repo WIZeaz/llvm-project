@@ -24,6 +24,10 @@ static inline void emitDoubleWord(uint32_t C, raw_ostream &OS) {
   emitByte((C >> 16) & 0xff, OS);
   emitByte((C >> 24) & 0xff, OS);
 }
+static inline void emitQuadraWord(uint64_t C, raw_ostream &OS) {
+  emitDoubleWord(C & 0xffffffff, OS);
+  emitDoubleWord((C >> 32) & 0xffffffff, OS);
+}
 
 static uint8_t modRMByte(unsigned Mod, unsigned RegOpcode, unsigned RM) {
   assert(Mod < 4 && RegOpcode < 8 && RM < 8 && "ModRM Fields out of range!");
@@ -102,6 +106,51 @@ void Y86MCCodeEmitter::emitMemModRMByte(const MCInst &MI, uint64_t TSFlags,
   }
 }
 
+void Y86MCCodeEmitter::emitRegMemBytes(const MCInst &MI, raw_ostream &OS,
+                                       uint64_t TSFlags, uint8_t &CurOp) const {
+  uint64_t MRMFormBits = Y86II::getMRMFormat(TSFlags);
+  uint64_t FormBits = Y86II::getFormat(TSFlags);
+  uint8_t Mod;
+  uint8_t RegOpcode;
+  uint8_t RM;
+  // when Opcode
+  if (MRMFormBits == Y86II::MRMrr) {
+    // Mod must be 0b11
+    Mod = 3;
+    RegOpcode = getRegEncoding(MI.getOperand(CurOp++));
+    RM = getRegEncoding(MI.getOperand(CurOp++));
+    if (FormBits == Y86II::Format::FormMR)
+      std::swap(RM, RegOpcode);
+    emitByte(modRMByte(Mod, RegOpcode, RM), OS);
+  } else if (MRMFormBits == Y86II::MRMrm) {
+    // Segment always be zero
+    MCOperand Reg;
+    if (FormBits == Y86II::Format::FormMR) {
+      // Order: MemOp, Reg
+      Reg = MI.getOperand(CurOp + 5);
+      RegOpcode = getRegEncoding(Reg);
+      emitMemModRMByte(MI, TSFlags, RegOpcode, CurOp, OS);
+    } else {
+      // Order: Reg, MemOp
+      Reg = MI.getOperand(CurOp);
+      RegOpcode = getRegEncoding(Reg);
+      emitMemModRMByte(MI, TSFlags, RegOpcode, CurOp + 1, OS);
+    }
+    CurOp += 6;
+
+  } else {
+    RegOpcode = Y86II::getExtOpcode(TSFlags);
+    if (Y86II::hasMem(TSFlags)) {
+      emitMemModRMByte(MI, TSFlags, RegOpcode, CurOp, OS);
+      CurOp += 5;
+    } else {
+      Mod = 3;
+      RM = getRegEncoding(MI.getOperand(CurOp++));
+      emitByte(modRMByte(Mod, RegOpcode, RM), OS);
+    }
+  }
+}
+
 void Y86MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {
@@ -114,15 +163,18 @@ void Y86MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   uint64_t Opcode = Y86II::getOpcode(TSFlags);
   uint8_t CurOp = 0;
 
-  std::cout << "Opcode = " << Opcode << "\tMRMFormBits = " << MRMFormBits
-            << "\tImmTyBits = " << ImmTyBits << std::endl;
+  LLVM_DEBUG(dbgs() << "Opcode = " << Opcode << "\nMRMFormBits = "
+                    << MRMFormBits << "\nImmTyBits = " << ImmTyBits << "\n\n");
+
+  if (Y86II::isBinOP(TSFlags))
+    CurOp++;
 
   if (Y86II::isPseudo(TSFlags)) {
     return;
   }
 
   // 0. REX prefix
-  if (Y86II::hasREX_W(TSFlags)){
+  if (Y86II::hasREX_W(TSFlags)) {
     emitByte(0x48, OS);
   }
 
@@ -135,45 +187,7 @@ void Y86MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   // 2. Emit ModRM, SIB, Disp
   if (MRMFormBits != Y86II::NoMRM) {
-    uint8_t Mod;
-    uint8_t RegOpcode;
-    uint8_t RM;
-    // when Opcode
-    if (MRMFormBits == Y86II::MRMrr) {
-      // Mod must be 0b11
-      Mod = 3;
-      RegOpcode = getRegEncoding(MI.getOperand(CurOp++));
-      RM = getRegEncoding(MI.getOperand(CurOp++));
-      if (FormBits == Y86II::Format::FormMR)
-        std::swap(RM, RegOpcode);
-      emitByte(modRMByte(Mod, RegOpcode, RM), OS);
-    } else if (MRMFormBits == Y86II::MRMrm) {
-      // Segment always be zero
-      MCOperand Reg;
-      if (FormBits == Y86II::Format::FormMR) {
-        // Order: MemOp, Reg
-        Reg = MI.getOperand(CurOp + 5);
-        RegOpcode = getRegEncoding(Reg);
-        emitMemModRMByte(MI, TSFlags, RegOpcode, CurOp, OS);
-      } else {
-        // Order: Reg, MemOp
-        Reg = MI.getOperand(CurOp);
-        RegOpcode = getRegEncoding(Reg);
-        emitMemModRMByte(MI, TSFlags, RegOpcode, CurOp + 1, OS);
-      }
-      CurOp += 6;
-
-    } else {
-      RegOpcode = Y86II::getExtOpcode(TSFlags);
-      if (Y86II::hasMem(TSFlags)) {
-        emitMemModRMByte(MI, TSFlags, RegOpcode, CurOp, OS);
-        CurOp += 5;
-      } else {
-        Mod = 3;
-        RM = getRegEncoding(MI.getOperand(CurOp++));
-        emitByte(modRMByte(Mod, RegOpcode, RM), OS);
-      }
-    }
+    emitRegMemBytes(MI, OS, TSFlags, CurOp);
   }
 
   // 3. Emit Immediate
@@ -188,6 +202,9 @@ void Y86MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
       break;
     case Y86II::Imm32:
       emitDoubleWord(Imm, OS);
+      break;
+    case Y86II::Imm64:
+      emitQuadraWord(Imm, OS);
       break;
     default:
       llvm_unreachable("unimplemented imm type");

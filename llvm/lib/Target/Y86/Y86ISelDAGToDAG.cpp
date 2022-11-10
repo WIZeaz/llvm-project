@@ -72,16 +72,37 @@ bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                                  SDValue &Segment) {
   SDLoc DL(N);
   MVT VT = N.getSimpleValueType();
+  SDValue Zero = CurDAG->getTargetConstant(0, DL, VT);
+  Scale = Zero;
+  Index = Zero;
+  Disp = Zero;
+  Segment = Zero;
+
+  // [Base]
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), VT);
-    SDValue zero = CurDAG->getTargetConstant(0, DL, VT);
-    Scale = zero;
-    Index = zero;
-    Disp = zero;
-    Segment = zero;
     return true;
   }
-  return false;
+  
+  // [Base] + disp 
+  if (CurDAG->isBaseWithConstantOffset(N)) {
+    // Base can be FrameIndex or SDValue
+    // If the first operand is a FI, get the TargetFI Node
+    if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N.getOperand(0)))
+      Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), VT);
+    else
+      Base = N.getOperand(0);
+    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1));
+    Disp = CurDAG->getTargetConstant(CN->getSExtValue(), DL, VT);
+    return true;
+  }
+
+  // default: Use Base
+  Base = N;
+  //Parent->dump();
+  //N.dump();
+  //llvm_unreachable("fail to select Addr");
+  return true;
 }
 
 FunctionPass *createY86ISelDag(Y86TargetMachine &TM,

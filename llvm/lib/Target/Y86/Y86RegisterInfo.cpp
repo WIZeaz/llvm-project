@@ -90,15 +90,12 @@ BitVector Y86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
                                           int SPAdj, unsigned FIOperandNum,
                                           RegScavenger *RS) const {
-  // llvm_unreachable("???");
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   const Y86FrameLowering *TFI = getFrameLowering(MF);
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
-  std::cerr << "=====\n";
-  MI.dump();
   // Determine base register and offset.
   int FIOffset;
   Register BasePtr;
@@ -161,8 +158,6 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         FIOffset + (uint64_t)MI.getOperand(FIOperandNum + 3).getOffset();
     MI.getOperand(FIOperandNum + 3).setOffset(Offset);
   }
-  MI.dump();
-  std::cerr << "=====\n";
 }
 
 bool Y86RegisterInfo::requiresRegisterScavenging(

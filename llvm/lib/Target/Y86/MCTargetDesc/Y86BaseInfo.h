@@ -76,6 +76,10 @@ namespace Y86II {
         return (TSFlags>>23) & 1;
     }
 
+    inline bool isBinOP(uint64_t TSFlags) {
+        return (TSFlags>>24) & 1;
+    }
+
     inline bool isPseudo(uint64_t TSFlags) {
         return getFormat(TSFlags) == Pseudo;
     }

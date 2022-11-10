@@ -31,7 +31,7 @@ void Y86FrameLowering::emitPrologue(MachineFunction &MF,
         .addReg(Y86::EBP)
         .addReg(Y86::ESP);
   }
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::SUB64ri))
+  BuildMI(MBB, MBBI, DL, TII.get(Y86::SUB64ri),Y86::ESP)
       .addReg(Y86::ESP)
       .addImm(StackSize);
 }
@@ -42,7 +42,7 @@ void Y86FrameLowering::emitEpilogue(MachineFunction &MF,
   uint64_t StackSize = MFI.getStackSize();
   DebugLoc DL;
 
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::ADD64ri))
+  BuildMI(MBB, MBBI, DL, TII.get(Y86::ADD64ri), Y86::ESP)
       .addReg(Y86::ESP)
       .addImm(StackSize);
   if (hasFP(MF)) {
@@ -77,16 +77,11 @@ StackOffset Y86FrameLowering::getFrameIndexReference(const MachineFunction &MF,
   // frame, base, and stack pointer depending on which is used.
   int Offset = MFI.getObjectOffset(FI) - getOffsetOfLocalArea();
   const Y86MachineFunctionInfo *Y86FI = MF.getInfo<Y86MachineFunctionInfo>();
-  unsigned CSSize = Y86FI->getCalleeSavedFrameSize();
   uint64_t StackSize = MFI.getStackSize();
-  int64_t FPDelta = 0;
 
   if (FrameReg == TRI->getFramePtr()) {
     // Skip saved EBP/RBP
-    Offset += SlotSize;
-
-    // Account for restricted Windows prologue.
-    Offset += FPDelta;
+    // Offset += SlotSize;
 
     // Skip the RETADDR move area
     int TailCallReturnAddrDelta = Y86FI->getTCReturnAddrDelta();

@@ -2,7 +2,7 @@
 
 
 multiclass ArithBinOp<bits<8> opcode_rr, bits<8> opcode_ri, MRM_Format mrm_ri, SDNode node, string asmname>{
-  let Constraints = "$dst = $op1" in {
+  let Constraints = "$dst = $op1" , BinOP=1 in {
   def NAME#32rr: I<opcode_rr, FormRM, MRMrr, (outs GR32:$dst), (ins GR32:$op1, GR32:$op2),
               !strconcat(asmname,"\t$op1, $op2"),[(set GR32:$dst, (node GR32:$op1, GR32:$op2))]>;
   def NAME#64rr: I<opcode_rr, FormRM, MRMrr, (outs GR32:$dst), (ins GR32:$op1, GR32:$op2),
