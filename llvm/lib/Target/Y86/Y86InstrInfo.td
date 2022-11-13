@@ -16,7 +16,10 @@ def Y86sub_flag  : SDNode<"Y86ISD::SUB",  SDTBinaryArithWithFlags>;
 // A version of ptr_rc which excludes SP, ESP, and RSP. This is used for
 // the index operand of an address, to conform to x86 encoding restrictions.
 def ptr_rc_nosp : PointerLikeRegClass<1>;
-
+// A version of i8mem for use on x86-64 and x32 that uses a NOREX GPR instead
+// of a plain GPR, so that it doesn't potentially require a REX prefix.
+def ptr_rc_norex : PointerLikeRegClass<2>;
+def ptr_rc_norex_nosp : PointerLikeRegClass<3>;
 
 
 def Y86MemAsmOperand : AsmOperandClass {
@@ -27,6 +30,7 @@ let RenderMethod = "addMemOperands", SuperClasses = [Y86MemAsmOperand] in {
     def Y86Mem8AsmOperand   : AsmOperandClass { let Name = "Mem8"; }
     def Y86Mem16AsmOperand  : AsmOperandClass { let Name = "Mem16"; }
     def Y86Mem32AsmOperand  : AsmOperandClass { let Name = "Mem32"; }
+    def Y86Mem64AsmOperand  : AsmOperandClass { let Name = "Mem64"; }
 }
 
 class Y86MemOperand<string printMethod,
@@ -37,10 +41,6 @@ class Y86MemOperand<string printMethod,
   let OperandType = "OPERAND_MEMORY";
 }
 
-// A version of i8mem for use on x86-64 and x32 that uses a NOREX GPR instead
-// of a plain GPR, so that it doesn't potentially require a REX prefix.
-def ptr_rc_norex : PointerLikeRegClass<2>;
-def ptr_rc_norex_nosp : PointerLikeRegClass<3>;
 
 def i8mem_NOREX : Operand<iPTR> {
   let PrintMethod = "printbytemem";
@@ -53,6 +53,7 @@ def i8mem_NOREX : Operand<iPTR> {
 def i8mem   : Y86MemOperand<"printbytemem",   Y86Mem8AsmOperand>;
 def i16mem  : Y86MemOperand<"printwordmem",   Y86Mem16AsmOperand>;
 def i32mem  : Y86MemOperand<"printdwordmem",  Y86Mem32AsmOperand>;
+def i64mem  : Y86MemOperand<"printqwordmem",  Y86Mem64AsmOperand>;
 
 def addr      : ComplexPattern<iPTR, 5, "selectAddr", [], [SDNPWantParent]>;
 
@@ -139,67 +140,88 @@ def i32immSExt8_su : PatLeaf<(i32immSExt8), [{
 
 /* let SchedRW = [WriteStore] in {
 def MOV8mi  : Ii8 <0xC6, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src),
-                   "mov{b}\t{$src, $dst|$dst, $src}",
+                   "mov\t$src, $dst",
                    [(store (i8 imm_su:$src), addr:$dst)]>;
 def MOV16mi : Ii16<0xC7, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src),
-                   "mov{w}\t{$src, $dst|$dst, $src}",
-                   [(store (i16 imm_su:$src), addr:$dst)]>, OpSize16;
+                   "mov\t$src, $dst",
+                   [(store (i16 imm_su:$src), addr:$dst)]>;
 def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
-                   "mov{l}\t{$src, $dst|$dst, $src}",
-                   [(store (i32 imm_su:$src), addr:$dst)]>, OpSize32;
+                   "mov\t$src, $dst",
+                   [(store (i32 imm_su:$src), addr:$dst)]>;
 } // SchedRW */ 
 
 let hasSideEffects = 0, isMoveReg = 1, SchedRW = [WriteMove] in {
-def MOV8rr  : I<0x88, FormMR, MRMrr, (outs GR8 :$dst), (ins GR8 :$src),
-              "mov{b}\t{$src, $dst|$dst, $src}", []>;
+/* def MOV8rr  : I<0x88, FormMR, MRMrr, (outs GR8 :$dst), (ins GR8 :$src),
+              "mov{b}\t{$src, $dst|$dst, $src}", []>; */
 def MOV16rr : I<0x89, FormMR, MRMrr, (outs GR16:$dst), (ins GR16:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}", []>, OpSize16;
+                "mov\t$src, $dst", []>;
 def MOV32rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}", []>, OpSize32;
-// workaround for running in 64bitsMode
-def MOV64rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
-                 "mov{q}\t{$src, $dst|$dst, $src}", []>, REX_W;
+                "mov\t$src, $dst", []>;
+def MOV64rr : I<0x89, FormMR, MRMrr, (outs GR64:$dst), (ins GR64:$src),
+                 "mov\t$src, $dst", []>, REX_W;
 }
 
 let isAsCheapAsAMove = 1, isMoveImm = 1 in {
-def MOV8ri  : Ii8 <0xB0, FormOr, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
+/* def MOV8ri  : Ii8 <0xB0, FormOr, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
                    "mov{b}\t{$src, $dst|$dst, $src}",
-                   [(set GR8:$dst, imm:$src)]>;
+                   [(set GR8:$dst, imm:$src)]>; */
 def MOV16ri : Ii16<0xB8, FormOr, NoMRM, (outs GR16:$dst), (ins i16imm:$src),
-                   "mov{w}\t{$src, $dst|$dst, $src}",
-                   [(set GR16:$dst, imm:$src)]>, OpSize16;
+                   "mov\t$src, $dst",
+                   [(set GR16:$dst, imm:$src)]>;
 def MOV32ri : Ii32<0xB8, FormOr, NoMRM, (outs GR32:$dst), (ins i32imm:$src),
-                   "mov{l}\t{$src, $dst|$dst, $src}",
-                   [(set GR32:$dst, imm:$src)]>, OpSize32;
+                   "mov\t$src, $dst",
+                   [(set GR32:$dst, imm:$src)]>;
+def MOV64ri : Ii64<0xB8, FormOr, NoMRM, (outs GR64:$dst), (ins i64imm:$src),
+                   "mov\t$src, $dst",
+                   [(set GR64:$dst, imm:$src)]>, REX_W;
 }
 
 let canFoldAsLoad = 1, isReMaterializable = 1, SchedRW = [WriteLoad] in {
-def MOV8rm  : I<0x8A, FormRM, MRMrm, (outs GR8 :$dst), (ins i8mem :$src),
+/* def MOV8rm  : I<0x8A, FormRM, MRMrm, (outs GR8 :$dst), (ins i8mem :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
-                [(set GR8:$dst, (loadi8 addr:$src))]>;
+                [(set GR8:$dst, (loadi8 addr:$src))]>; */
 def MOV16rm : I<0x8B, FormRM, MRMrm, (outs GR16:$dst), (ins i16mem:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}",
-                [(set GR16:$dst, (loadi16 addr:$src))]>, OpSize16;
+                "mov\t$src, $dst",
+                [(set GR16:$dst, (loadi16 addr:$src))]>;
 def MOV32rm : I<0x8B, FormRM, MRMrm, (outs GR32:$dst), (ins i32mem:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}",
-                [(set GR32:$dst, (loadi32 addr:$src))]>, OpSize32;
+                "mov\t$src, $dst",
+                [(set GR32:$dst, (loadi32 addr:$src))]>;
+def MOV64rm : I<0x8B, FormRM, MRMrm, (outs GR64:$dst), (ins i64mem:$src),
+                "mov\t$src, $dst",
+                [(set GR64:$dst, (load addr:$src))]>, REX_W;
 }
 
+
 let SchedRW = [WriteStore] in {
-def MOV8mr  : I<0x88, FormMR, MRMrm, (outs), (ins i8mem :$dst, GR8 :$src),
+/* def MOV8mr  : I<0x88, FormMR, MRMrm, (outs), (ins i8mem :$dst, GR8 :$src),
                 "mov{b}\t{$src, $dst|$dst, $src}",
-                [(store GR8:$src, addr:$dst)]>;
+                [(store GR8:$src, addr:$dst)]>; */
 def MOV16mr : I<0x89, FormMR, MRMrm, (outs), (ins i16mem:$dst, GR16:$src),
-                "mov{w}\t{$src, $dst|$dst, $src}",
-                [(store GR16:$src, addr:$dst)]>, OpSize16;
+                "mov\t$src, $dst",
+                [(store GR16:$src, addr:$dst)]>;
 def MOV32mr : I<0x89, FormMR, MRMrm, (outs), (ins i32mem:$dst, GR32:$src),
-                "mov{l}\t{$src, $dst|$dst, $src}",
-                [(store GR32:$src, addr:$dst)]>, OpSize32;
+                "mov\t$src, $dst",
+                [(store GR32:$src, addr:$dst)]>;
+def MOV64mr : I<0x89, FormMR, MRMrm, (outs), (ins i64mem:$dst, GR64:$src),
+                "mov\t$src, $dst",
+                [(store GR64:$src, addr:$dst)]>, REX_W;
 } // SchedRW
+
+def MOVSX64rr32: I<0x63, FormRM, MRMrr, (outs GR64:$dst), (ins GR32:$src),
+                    "movs{lq|xd}\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, (sext GR32:$src))]>, Sched<[WriteALU]>, REX_W;
+
+def MOVSX64rm32: I<0x63, FormRM, MRMrm, (outs GR64:$dst), (ins i32mem:$src),
+                    "movs{lq|xd}\t{$src, $dst|$dst, $src}",
+                    [(set GR64:$dst, (i64 (sextloadi32 addr:$src)))]>,
+                    Sched<[WriteALULd]>;
+
+def : Pat<(sext_inreg GR64:$src, i32),
+          (MOVSX64rr32 (EXTRACT_SUBREG GR64:$src, sub_32bit))>;
 
 let Defs = [ESP], Uses = [ESP], hasSideEffects=0 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
-def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop{\t$reg", []>;
+def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop\t$reg", []>;
 def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop\t$reg", []>;
 def POP64r  : I<0x58, FormOr, NoMRM, (outs GR64:$reg), (ins), "pop\t$reg", []>;
 }
@@ -217,7 +239,7 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
   def RET  : PseudoI<(outs), (ins i32imm:$adj, variable_ops), [(Y86retflag timm:$adj)]>;
 
   def RET32  : I   <0xC3, FormO, NoMRM, (outs), (ins variable_ops),
-                    "ret{l}", []>, OpSize32;
+                    "ret", []>;
   def RETI32 : Ii16<0xC2, FormO, NoMRM, (outs), (ins i16imm:$amt, variable_ops),
-                    "ret{l}\t$amt", []>, OpSize32; 
+                    "ret\t$amt", []>; 
 }

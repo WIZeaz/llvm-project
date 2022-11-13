@@ -140,15 +140,15 @@ def R15W : Y86Reg<"r15w", 15, [R15B,R15BH]>;
 // def Undef: Y86Reg<"undef",9>, DwarfRegNum<[9]>;
 // 32-bit registers
 let SubRegIndices = [sub_16bit, sub_16bit_hi], CoveredBySubRegs = 1 in {
-def EAX : Y86Reg<"eax", 0, [AX, HAX]>, DwarfRegNum<[-2, 0, 0]>;
-def EDX : Y86Reg<"edx", 2, [DX, HDX]>, DwarfRegNum<[-2, 2, 2]>;
-def ECX : Y86Reg<"ecx", 1, [CX, HCX]>, DwarfRegNum<[-2, 1, 1]>;
-def EBX : Y86Reg<"ebx", 3, [BX, HBX]>, DwarfRegNum<[-2, 3, 3]>;
-def ESI : Y86Reg<"esi", 6, [SI, HSI]>, DwarfRegNum<[-2, 6, 6]>;
-def EDI : Y86Reg<"edi", 7, [DI, HDI]>, DwarfRegNum<[-2, 7, 7]>;
-def EBP : Y86Reg<"ebp", 5, [BP, HBP]>, DwarfRegNum<[-2, 4, 5]>;
-def ESP : Y86Reg<"esp", 4, [SP, HSP]>, DwarfRegNum<[-2, 5, 4]>;
-def EIP : Y86Reg<"eip", 0, [IP, HIP]>, DwarfRegNum<[-2, 8, 8]>;
+def EAX : Y86Reg<"eax", 0, [AX, HAX]>, DwarfRegNum<[/* -2, 0,  */0]>;
+def EDX : Y86Reg<"edx", 2, [DX, HDX]>, DwarfRegNum<[/* -2, 2,  */2]>;
+def ECX : Y86Reg<"ecx", 1, [CX, HCX]>, DwarfRegNum<[/* -2, 1,  */1]>;
+def EBX : Y86Reg<"ebx", 3, [BX, HBX]>, DwarfRegNum<[/* -2, 3,  */3]>;
+def ESI : Y86Reg<"esi", 6, [SI, HSI]>, DwarfRegNum<[/* -2, 6,  */6]>;
+def EDI : Y86Reg<"edi", 7, [DI, HDI]>, DwarfRegNum<[/* -2, 7,  */7]>;
+def EBP : Y86Reg<"ebp", 5, [BP, HBP]>, DwarfRegNum<[/* -2, 4,  */5]>;
+def ESP : Y86Reg<"esp", 4, [SP, HSP]>, DwarfRegNum<[/* -2, 5,  */4]>;
+def EIP : Y86Reg<"eip", 0, [IP, HIP]>, DwarfRegNum<[/* -2, 8,  */8]>;
 }
 
 // Y86-64 only, requires REX
@@ -166,26 +166,26 @@ def R15D : Y86Reg<"r15d", 15, [R15W,R15WH]>;
 
 // 64-bit registers, Y86-64 only
 let SubRegIndices = [sub_32bit] in {
-def RAX : Y86Reg<"rax", 0, [EAX]>, DwarfRegNum<[0, -2, -2]>;
-def RDX : Y86Reg<"rdx", 2, [EDX]>, DwarfRegNum<[1, -2, -2]>;
-def RCX : Y86Reg<"rcx", 1, [ECX]>, DwarfRegNum<[2, -2, -2]>;
-def RBX : Y86Reg<"rbx", 3, [EBX]>, DwarfRegNum<[3, -2, -2]>;
-def RSI : Y86Reg<"rsi", 6, [ESI]>, DwarfRegNum<[4, -2, -2]>;
-def RDI : Y86Reg<"rdi", 7, [EDI]>, DwarfRegNum<[5, -2, -2]>;
-def RBP : Y86Reg<"rbp", 5, [EBP]>, DwarfRegNum<[6, -2, -2]>;
-def RSP : Y86Reg<"rsp", 4, [ESP]>, DwarfRegNum<[7, -2, -2]>;
+def RAX : Y86Reg<"rax", 0, [EAX]>, DwarfRegNum<[0/* , -2, -2 */]>;
+def RDX : Y86Reg<"rdx", 2, [EDX]>, DwarfRegNum<[1/* , -2, -2 */]>;
+def RCX : Y86Reg<"rcx", 1, [ECX]>, DwarfRegNum<[2/* , -2, -2 */]>;
+def RBX : Y86Reg<"rbx", 3, [EBX]>, DwarfRegNum<[3/* , -2, -2 */]>;
+def RSI : Y86Reg<"rsi", 6, [ESI]>, DwarfRegNum<[4/* , -2, -2 */]>;
+def RDI : Y86Reg<"rdi", 7, [EDI]>, DwarfRegNum<[5/* , -2, -2 */]>;
+def RBP : Y86Reg<"rbp", 5, [EBP]>, DwarfRegNum<[6/* , -2, -2 */]>;
+def RSP : Y86Reg<"rsp", 4, [ESP]>, DwarfRegNum<[7/* , -2, -2 */]>;
 
 // These also require REX.
 let CostPerUse = [1] in {
-def R8  : Y86Reg<"r8",   8, [R8D]>,  DwarfRegNum<[ 8, -2, -2]>;
-def R9  : Y86Reg<"r9",   9, [R9D]>,  DwarfRegNum<[ 9, -2, -2]>;
-def R10 : Y86Reg<"r10", 10, [R10D]>, DwarfRegNum<[10, -2, -2]>;
-def R11 : Y86Reg<"r11", 11, [R11D]>, DwarfRegNum<[11, -2, -2]>;
-def R12 : Y86Reg<"r12", 12, [R12D]>, DwarfRegNum<[12, -2, -2]>;
-def R13 : Y86Reg<"r13", 13, [R13D]>, DwarfRegNum<[13, -2, -2]>;
-def R14 : Y86Reg<"r14", 14, [R14D]>, DwarfRegNum<[14, -2, -2]>;
-def R15 : Y86Reg<"r15", 15, [R15D]>, DwarfRegNum<[15, -2, -2]>;
-def RIP : Y86Reg<"rip",  0, [EIP]>,  DwarfRegNum<[16, -2, -2]>;
+def R8  : Y86Reg<"r8",   8, [R8D]>,  DwarfRegNum<[ 8/* , -2, -2 */]>;
+def R9  : Y86Reg<"r9",   9, [R9D]>,  DwarfRegNum<[ 9/* , -2, -2 */]>;
+def R10 : Y86Reg<"r10", 10, [R10D]>, DwarfRegNum<[10/* , -2, -2 */]>;
+def R11 : Y86Reg<"r11", 11, [R11D]>, DwarfRegNum<[11/* , -2, -2 */]>;
+def R12 : Y86Reg<"r12", 12, [R12D]>, DwarfRegNum<[12/* , -2, -2 */]>;
+def R13 : Y86Reg<"r13", 13, [R13D]>, DwarfRegNum<[13/* , -2, -2 */]>;
+def R14 : Y86Reg<"r14", 14, [R14D]>, DwarfRegNum<[14/* , -2, -2 */]>;
+def R15 : Y86Reg<"r15", 15, [R15D]>, DwarfRegNum<[15/* , -2, -2 */]>;
+def RIP : Y86Reg<"rip",  0, [EIP]>,  DwarfRegNum<[16/* , -2, -2 */]>;
 }}
 
 
@@ -217,8 +217,6 @@ def GR32 : RegisterClass<"Y86", [i32], 32, (add EAX, ECX, EDX, ESI, EDI, EBX, EB
                               R8D, R9D, R10D, R11D, R14D, R15D, R12D, R13D)>;
 def GR16 : RegisterClass<"Y86", [i16], 16, (add AX, CX, DX, SI, DI, BX, BP, SP,
                               R8W, R9W, R10W, R11W, R14W, R15W, R12W, R13W)>;
-def GR8  : RegisterClass<"Y86", [i8],  8,  (add AL, CL, DL, BL, SIL, DIL, BPL, SPL)>;
-
 
 // GR16_NOREX - GR16 registers which do not require a REX prefix.
 def GR16_NOREX : RegisterClass<"Y86", [i16], 16,
@@ -230,6 +228,21 @@ def GR32_NOREX : RegisterClass<"Y86", [i32], 32,
 def GR64_NOREX : RegisterClass<"Y86", [i64], 64,
                             (add RAX, RCX, RDX, RSI, RDI, RBX, RBP, RSP, RIP)>;
 
+
+// GR32_NOSP - GR32 registers except ESP.
+def GR32_NOSP : RegisterClass<"Y86", [i32], 32, (sub GR32, ESP)>;
+
+// GR64_NOSP - GR64 registers except RSP (and RIP).
+def GR64_NOSP : RegisterClass<"Y86", [i64], 64, (sub GR64, RSP, RIP)>;
+
+// GR32_NOREX_NOSP - GR32 registers which do not require a REX prefix except
+// ESP.
+def GR32_NOREX_NOSP : RegisterClass<"Y86", [i32], 32,
+                                    (and GR32_NOREX, GR32_NOSP)>;
+
+// GR64_NOREX_NOSP - GR64_NOREX registers except RSP.
+def GR64_NOREX_NOSP : RegisterClass<"Y86", [i64], 64,
+                                    (and GR64_NOREX, GR64_NOSP)>;
 
 // Control registers.
 // def CONTROL_REG : RegisterClass<"Y86", [i64], 64, (sequence "CR%u", 0, 15)>;
@@ -257,13 +270,4 @@ def SEGMENT_REG : RegisterClass<"Y86", [i16], 16, (add CS, DS, SS, ES, FS, GS)>;
 def CCR : RegisterClass<"Y86", [i32], 32, (add EFLAGS)> {
   let CopyCost = -1;  // Don't allow copying of status registers.
   let isAllocatable = 0;
-}
-
-// GR8_NOREX - GR8 registers which do not require a REX prefix.
-def GR8_NOREX : RegisterClass<"Y86", [i8], 8,
-                              (add AL, CL, DL, AH, CH, DH, BL, BH)> {
-  let AltOrders = [(sub GR8_NOREX, AH, BH, CH, DH)];
-  let AltOrderSelect = [{
-    return MF.getSubtarget<Y86Subtarget>().is64Bit();
-  }];
 }

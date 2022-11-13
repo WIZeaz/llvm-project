@@ -17,6 +17,7 @@
 #include "Y86RegisterInfo.h"
 #include "Y86Subtarget.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Config/llvm-config.h"
@@ -30,6 +31,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/KnownBits.h"
 #include "llvm/Support/MathExtras.h"
+#include <iostream>
 
 using namespace llvm;
 
@@ -77,15 +79,20 @@ bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
   Index = Zero;
   Disp = Zero;
   Segment = Zero;
+  std::cout<<"start selectAddr\n";
+  N.dump();
+  Parent->dump();
 
   // [Base]
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
+    std::cout<<"select [Base] mode\n";
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), VT);
     return true;
   }
   
   // [Base] + disp 
   if (CurDAG->isBaseWithConstantOffset(N)) {
+    std::cout<<"select [Base]+disp mode\n";
     // Base can be FrameIndex or SDValue
     // If the first operand is a FI, get the TargetFI Node
     if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N.getOperand(0)))
@@ -96,7 +103,7 @@ bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
     Disp = CurDAG->getTargetConstant(CN->getSExtValue(), DL, VT);
     return true;
   }
-
+  std::cout<<"select [Base] mode (default)\n";
   // default: Use Base
   Base = N;
   //Parent->dump();

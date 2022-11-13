@@ -33,11 +33,13 @@ Y86TargetLowering::Y86TargetLowering(const Y86TargetMachine &TM,
     : TargetLowering(TM), Subtarget(STI) {
   addRegisterClass(MVT::i64, &Y86::GR64RegClass);
   addRegisterClass(MVT::i32, &Y86::GR32RegClass);
-  //addRegisterClass(MVT::i16, &Y86::GR16RegClass);
-  //addRegisterClass(MVT::i8, &Y86::GR8RegClass);
+  // addRegisterClass(MVT::i16, &Y86::GR16RegClass);
+  // addRegisterClass(MVT::i8, &Y86::GR8RegClass);
   for (MVT VT : MVT::integer_valuetypes())
-    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
-  setOperationAction(ISD::SHL, MVT::i32, Expand);
+    setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1,
+                     Promote); // signextend from i1 to VT
+  //setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Expand);
+
   computeRegisterProperties(Subtarget.getRegisterInfo());
 }
 
@@ -77,12 +79,12 @@ SDValue Y86TargetLowering::LowerFormalArguments(
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
       const TargetRegisterClass *RC;
-      if (RegVT == MVT::i8)
-        RC = &Y86::GR8RegClass;
-      else if (RegVT == MVT::i16)
+      if (RegVT == MVT::i16)
         RC = &Y86::GR16RegClass;
       else if (RegVT == MVT::i32)
         RC = &Y86::GR32RegClass;
+      else if (RegVT == MVT::i64)
+        RC = &Y86::GR64RegClass;
       else
         llvm_unreachable("Unsupported argument type!");
       Register Reg = MF.addLiveIn(VA.getLocReg(), RC);

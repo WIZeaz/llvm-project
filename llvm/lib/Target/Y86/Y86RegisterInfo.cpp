@@ -41,7 +41,18 @@ Y86RegisterInfo::Y86RegisterInfo(const Y86Subtarget &ST)
 const TargetRegisterClass *
 Y86RegisterInfo::getPointerRegClass(const MachineFunction &MF,
                                     unsigned Kind) const {
-  return &Y86::GR32RegClass;
+  switch (Kind) {
+  case 0:
+    return &Y86::GR64RegClass;
+  case 1:
+    return &Y86::GR64_NOSPRegClass;
+  case 2:
+    return &Y86::GR64_NOREXRegClass;
+  case 3:
+    return &Y86::GR64_NOREX_NOSPRegClass;
+  default:
+    llvm_unreachable("unexpected PointerRegClass");
+  }
 }
 
 const MCPhysReg *

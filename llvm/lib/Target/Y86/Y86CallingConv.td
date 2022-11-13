@@ -50,8 +50,9 @@ def CC_Y86_Common : CallingConv<[
   //CCIfPtr<CCCustom<"CC_X86_64_Pointer">>,
 
   // The first 6 integer arguments are passed in integer registers.
-  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX/* , R8D, R9D */]>>,
-
+  CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
+  CCIfType<[i64], CCAssignToReg<[RDI, RSI, RDX, RCX, R8 , R9 ]>>,
+  
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
   CCIfType<[i32, i64, f16, f32, f64], CCAssignToStack<8, 8>>,

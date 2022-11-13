@@ -117,3 +117,10 @@ class Ii32<bits<8> o, Format f, MRM_Format mrm, dag outs, dag ins, string asm,
 
   let CodeSize = 3;
 }
+
+class Ii64<bits<8> o, Format f, MRM_Format mrm, dag outs, dag ins, string asm,
+           list<dag> pattern>
+  : Y86Inst<o, f, mrm, Imm64, outs, ins, asm, pattern> {
+
+  let CodeSize = 3;
+}

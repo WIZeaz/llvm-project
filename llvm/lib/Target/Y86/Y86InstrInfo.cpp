@@ -67,14 +67,13 @@ void Y86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   // bool HasAVX = Subtarget.hasAVX();
   // bool HasVLX = Subtarget.hasVLX();
   unsigned Opc = 0;
-  if (Y86::GR32RegClass.contains(DestReg, SrcReg))
+  if (Y86::GR64RegClass.contains(DestReg, SrcReg))
+    Opc = Y86::MOV64rr;
+  else if (Y86::GR32RegClass.contains(DestReg, SrcReg))
     Opc = Y86::MOV32rr;
   else if (Y86::GR16RegClass.contains(DestReg, SrcReg))
     Opc = Y86::MOV16rr;
-  else if (Y86::GR8RegClass.contains(DestReg, SrcReg))
-    Opc = Y86::MOV8rr;
-  /* if (!Opc)
-    Opc = CopyToFromAsymmetricReg(DestReg, SrcReg, Subtarget); */
+  else llvm_unreachable("unsupport copy regclass");
 
   if (Opc) {
     BuildMI(MBB, MI, DL, get(Opc), DestReg)
@@ -109,13 +108,7 @@ static unsigned getLoadStoreRegOpcode(Register Reg,
   default:
     llvm_unreachable("Unknown spill size");
   case 1:
-    assert(Y86::GR8RegClass.hasSubClassEq(RC) && "Unknown 1-byte regclass");
-    // if (STI.is64Bit())
-    //  Copying to or from a physical H register on Y86-64 requires a NOREX
-    //  move.  Otherwise use a normal move.
-    // if (isHReg(Reg) || Y86::GR8_ABCD_HRegClass.hasSubClassEq(RC))
-    //   return load ? Y86::MOV8rm_NOREX : Y86::MOV8mr_NOREX;
-    return load ? Y86::MOV8rm : Y86::MOV8mr;
+    llvm_unreachable("unsupport spill size 1");
   case 2:
     assert(Y86::GR16RegClass.hasSubClassEq(RC) && "Unknown 2-byte regclass");
     return load ? Y86::MOV16rm : Y86::MOV16mr;
