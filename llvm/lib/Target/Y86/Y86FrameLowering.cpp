@@ -1,4 +1,4 @@
-#include "Y86Framelowering.h"
+#include "Y86FrameLowering.h"
 #include "MCTargetDesc/Y86MCTargetDesc.h"
 #include "Y86InstrInfo.h"
 #include "Y86MachineFunctionInfo.h"
@@ -26,13 +26,13 @@ void Y86FrameLowering::emitPrologue(MachineFunction &MF,
   // BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::ESI);
   // BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::EDI);
   if (hasFP(MF)) {
-    BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::EBP);
+    BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH64r)).addReg(Y86::RBP);
     BuildMI(MBB, MBBI, DL, TII.get(Y86::MOV64rr))
-        .addReg(Y86::EBP)
-        .addReg(Y86::ESP);
+        .addReg(Y86::RBP)
+        .addReg(Y86::RSP);
   }
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::SUB64ri),Y86::ESP)
-      .addReg(Y86::ESP)
+  BuildMI(MBB, MBBI, DL, TII.get(Y86::SUB64ri),Y86::RSP)
+      .addReg(Y86::RSP)
       .addImm(StackSize);
 }
 void Y86FrameLowering::emitEpilogue(MachineFunction &MF,
@@ -42,11 +42,11 @@ void Y86FrameLowering::emitEpilogue(MachineFunction &MF,
   uint64_t StackSize = MFI.getStackSize();
   DebugLoc DL;
 
-  BuildMI(MBB, MBBI, DL, TII.get(Y86::ADD64ri), Y86::ESP)
-      .addReg(Y86::ESP)
+  BuildMI(MBB, MBBI, DL, TII.get(Y86::ADD64ri), Y86::RSP)
+      .addReg(Y86::RSP)
       .addImm(StackSize);
   if (hasFP(MF)) {
-    BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::EBP);
+    BuildMI(MBB, MBBI, DL, TII.get(Y86::POP64r)).addReg(Y86::RBP);
   }
   // BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::EDI);
   // BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::ESI);

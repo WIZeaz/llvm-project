@@ -17,12 +17,10 @@
 #include "Y86FrameLowering.h"
 #include "Y86MachineFunctionInfo.h"
 #include "Y86RegisterInfo.h"
-// #include "Y86InstrBuilder.h"
-// #include "Y86IntrinsicsInfo.h"
-// #include "Y86MachineFunctionInfo.h"
 #include "Y86TargetMachine.h"
 #include "Y86TargetObjectFile.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/ISDOpcodes.h"
 
 using namespace llvm;
 
@@ -30,14 +28,16 @@ using namespace llvm;
 
 #define DEBUG_TYPE "y86-isel"
 
-llvm::Y86TargetLowering::Y86TargetLowering(const Y86TargetMachine &TM,
-                                           const Y86Subtarget &STI)
+Y86TargetLowering::Y86TargetLowering(const Y86TargetMachine &TM,
+                                     const Y86Subtarget &STI)
     : TargetLowering(TM), Subtarget(STI) {
+  addRegisterClass(MVT::i64, &Y86::GR64RegClass);
   addRegisterClass(MVT::i32, &Y86::GR32RegClass);
-  addRegisterClass(MVT::i16, &Y86::GR16RegClass);
-  addRegisterClass(MVT::i8, &Y86::GR8RegClass);
+  //addRegisterClass(MVT::i16, &Y86::GR16RegClass);
+  //addRegisterClass(MVT::i8, &Y86::GR8RegClass);
   for (MVT VT : MVT::integer_valuetypes())
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
+  setOperationAction(ISD::SHL, MVT::i32, Expand);
   computeRegisterProperties(Subtarget.getRegisterInfo());
 }
 

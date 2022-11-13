@@ -1,6 +1,4 @@
 
-def Not64BitMode : Predicate<"(true)">;
-
 def SDTY86Ret     : SDTypeProfile<0, -1, [SDTCisVT<0, i32>]>;
 
 def SDTBinaryArithWithFlags : SDTypeProfile<2, 2,
@@ -55,8 +53,6 @@ def i8mem_NOREX : Operand<iPTR> {
 def i8mem   : Y86MemOperand<"printbytemem",   Y86Mem8AsmOperand>;
 def i16mem  : Y86MemOperand<"printwordmem",   Y86Mem16AsmOperand>;
 def i32mem  : Y86MemOperand<"printdwordmem",  Y86Mem32AsmOperand>;
-
-
 
 def addr      : ComplexPattern<iPTR, 5, "selectAddr", [], [SDNPWantParent]>;
 
@@ -203,17 +199,15 @@ def MOV32mr : I<0x89, FormMR, MRMrm, (outs), (ins i32mem:$dst, GR32:$src),
 
 let Defs = [ESP], Uses = [ESP], hasSideEffects=0 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
-def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop{w}\t$reg", []>,
-                OpSize16;
-def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>,
-                OpSize32/* , Requires<[Not64BitMode]>*/;
+def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop{\t$reg", []>;
+def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop\t$reg", []>;
+def POP64r  : I<0x58, FormOr, NoMRM, (outs GR64:$reg), (ins), "pop\t$reg", []>;
 }
 
 let mayStore = 1, SchedRW = [WriteStore] in {
-def PUSH16r  : I<0x50, FormOr, NoMRM, (outs), (ins GR16:$reg), "push{w}\t$reg",[]>,
-                 OpSize16;
-def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>,
-                 OpSize32/* , Requires<[Not64BitMode]>*/;    
+def PUSH16r  : I<0x50, FormOr, NoMRM, (outs), (ins GR16:$reg), "push\t$reg",[]>;
+def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push\t$reg",[]>;    
+def PUSH64r  : I<0x50, FormOr, NoMRM, (outs), (ins GR64:$reg), "push\t$reg",[]>;    
 }
 
 }

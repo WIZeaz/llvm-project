@@ -20,8 +20,8 @@
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetOptions.h"
 
-#include "Y86.h"
 #include "TargetInfo/Y86TargetInfo.h"
+#include "Y86.h"
 #include "Y86TargetMachine.h"
 #include "Y86TargetObjectFile.h"
 
@@ -42,8 +42,7 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
 
   Ret += "-m:m";
 
-  // Pointers are 32 bit on some ABIs.
-  Ret += "-p:32:32";
+  Ret += "-p:64:64";
 
   // 8 and 16 bit integers only need to have natural alignment, but try to
   // align them to 32 bits. 64 bit integers have natural alignment.
@@ -81,7 +80,6 @@ Y86TargetMachine::Y86TargetMachine(const Target &T, const Triple &TT,
                         Options, getEffectiveRelocModel(JIT, RM),
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
       TLOF(std::make_unique<Y86ELFTargetObjectFile>()),
-      /* ABI(Y86ABIInfo::computeTargetABI()), */
       DefaultSubtarget(TT, CPU, CPU, FS, *this) {
 
   initAsmInfo();
@@ -121,19 +119,11 @@ public:
     return *getY86TargetMachine().getSubtargetImpl();
   }
 
-  // void addIRPasses() override;
-
   bool addInstSelector() override;
 
   void addPreEmitPass() override;
-
-#ifdef ENABLE_GPRESTORE
-  void addPreRegAlloc() override;
-#endif
 };
 } // namespace
-
-
 
 TargetPassConfig *Y86TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new Y86PassConfig(*this, PM);
