@@ -37,6 +37,28 @@ using namespace llvm;
 
 #define DEBUG_TYPE "y86-isel"
 
+void Y86DAGToDAGISel::selectFrameIndex(SDNode *SN, SDNode *N, unsigned Offset) {
+  SDLoc DL(SN);
+  MVT VT = N->getSimpleValueType(0);
+  int FI = cast<FrameIndexSDNode>(N)->getIndex();
+  SDValue TFI = CurDAG->getTargetFrameIndex(FI, VT);
+  unsigned Opc;
+  if (VT == MVT::i32) {
+    Opc = Y86::ADD32ri;
+  } else if (VT == MVT::i64) {
+    Opc = Y86::ADD64ri;
+  } else
+    llvm_unreachable("unsuported FrameIndex ValueType");
+
+  auto OffsetConstant = CurDAG->getTargetConstant(
+      Offset, DL, TLI->getPointerTy(CurDAG->getDataLayout()));
+  if (SN->hasOneUse())
+    CurDAG->SelectNodeTo(SN, Opc, N->getValueType(0), TFI, OffsetConstant);
+  else
+    ReplaceNode(SN, CurDAG->getMachineNode(Opc, DL, N->getValueType(0), TFI,
+                                           OffsetConstant));
+}
+
 void Y86DAGToDAGISel::Select(SDNode *Node) {
 
   unsigned Opcode = Node->getOpcode();
@@ -48,15 +70,16 @@ void Y86DAGToDAGISel::Select(SDNode *Node) {
   }
 
   switch (Opcode) {
-  default:
-    break;
+  case ISD::FrameIndex:
+    selectFrameIndex(Node, Node);
+    return;
   }
 
   // Select the default instruction
   SelectCode(Node);
 }
 
-bool Y86DAGToDAGISel::shouldAvoidImmediateInstFormsForSize(SDNode *N) const{
+bool Y86DAGToDAGISel::shouldAvoidImmediateInstFormsForSize(SDNode *N) const {
   return false;
 }
 
@@ -79,20 +102,23 @@ bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
   Index = Zero;
   Disp = Zero;
   Segment = Zero;
-  std::cout<<"start selectAddr\n";
-  N.dump();
-  Parent->dump();
+  LLVM_DEBUG(
+    dbgs()<<"start selectAddr";
+    N.dump();
+    Parent->dump()
+  );
+  
 
   // [Base]
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N)) {
-    std::cout<<"select [Base] mode\n";
+    LLVM_DEBUG(dbgs()<<"select [Base] mode (FrameIndex)\n");
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), VT);
     return true;
   }
-  
-  // [Base] + disp 
+
+  // [Base] + disp
   if (CurDAG->isBaseWithConstantOffset(N)) {
-    std::cout<<"select [Base]+disp mode\n";
+    LLVM_DEBUG(dbgs()<<"select [Base]+disp mode\n");
     // Base can be FrameIndex or SDValue
     // If the first operand is a FI, get the TargetFI Node
     if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N.getOperand(0)))
@@ -103,13 +129,12 @@ bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
     Disp = CurDAG->getTargetConstant(CN->getSExtValue(), DL, VT);
     return true;
   }
-  std::cout<<"select [Base] mode (default)\n";
+
   // default: Use Base
+  LLVM_DEBUG(dbgs()<<"select [Base] mode (default)\n");
   Base = N;
-  //Parent->dump();
-  //N.dump();
-  //llvm_unreachable("fail to select Addr");
   return true;
+  
 }
 
 FunctionPass *createY86ISelDag(Y86TargetMachine &TM,

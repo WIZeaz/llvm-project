@@ -148,7 +148,15 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   // The frame index format for stackmaps and patchpoints is different from the
   // Y86 format. It only has a FI and an offset.
-  if (Opc == TargetOpcode::STACKMAP || Opc == TargetOpcode::PATCHPOINT) {
+  /* if (Opc == TargetOpcode::STACKMAP || Opc == TargetOpcode::PATCHPOINT) {
+    assert(BasePtr == FramePtr && "Expected the FP as base register");
+    int64_t Offset = MI.getOperand(FIOperandNum + 1).getImm() + FIOffset;
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
+    return;
+  }
+ */
+  
+  if (Opc == Y86::ADD32ri || Opc == Y86::ADD64ri) {
     assert(BasePtr == FramePtr && "Expected the FP as base register");
     int64_t Offset = MI.getOperand(FIOperandNum + 1).getImm() + FIOffset;
     MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);

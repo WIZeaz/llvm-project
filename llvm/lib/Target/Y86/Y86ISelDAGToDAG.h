@@ -27,6 +27,13 @@ public:
       : SelectionDAGISel(TM, OL), Subtarget(nullptr) {}
   // bool runOnMachineFunction(MachineFunction &MF) override;
   // Pass Name
+  bool runOnMachineFunction(MachineFunction &MF) override {
+    // Make sure we re-emit a set of the global base reg if necessary
+    Subtarget = &MF.getSubtarget<Y86Subtarget>();
+    TLI = Subtarget->getTargetLowering();
+    SelectionDAGISel::runOnMachineFunction(MF);
+    return true;
+  }
   StringRef getPassName() const override {
     return "Y86 DAG->DAG Pattern Instruction Selection";
   }
@@ -39,10 +46,12 @@ protected:
   /// Keep a pointer to the Y86Subtarget around so that we can make the right
   /// decision when generating code for different targets.
   const Y86Subtarget *Subtarget;
+  const Y86TargetLowering *TLI;
   bool EnablePromoteAnyextLoad = true;
 
 private:
   void Select(SDNode *N) override;
+  void selectFrameIndex(SDNode *SN, SDNode *N, unsigned Offset=0);
   bool selectAddr(SDNode *Parent, SDValue N, SDValue &Base, SDValue &Scale,
                   SDValue &Index, SDValue &Disp, SDValue &Segment);
 #include "Y86GenDAGISel.inc"
