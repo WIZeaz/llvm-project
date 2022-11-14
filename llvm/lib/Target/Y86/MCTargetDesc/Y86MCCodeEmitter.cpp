@@ -34,8 +34,11 @@ static uint8_t modRMByte(unsigned Mod, unsigned RegOpcode, unsigned RM) {
   return RM | (RegOpcode << 3) | (Mod << 6);
 }
 
-void Y86MCCodeEmitter::emitPrefix(const MCInst &MI, raw_ostream &OS,
-                                  const MCSubtargetInfo &STI) const {}
+static inline void emitSIBByte(unsigned SS, unsigned Index, unsigned Base,
+                               raw_ostream &OS){
+  // SIB byte is in the same format as the modRMByte.
+  emitByte(modRMByte(SS, Index, Base), OS);
+}
 
 unsigned Y86MCCodeEmitter::getRegEncoding(const MCOperand &MO) const {
   return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg()) & 0x7;
@@ -93,10 +96,15 @@ void Y86MCCodeEmitter::emitMemModRMByte(const MCInst &MI, uint64_t TSFlags,
 
   if (RM == 4) {
     // emit SIB
-    llvm_unreachable("not implement emit SIB");
+    unsigned SS = Scale.getImm();
+    assert(SS == 1 || SS == 2 || SS == 4 || SS == 8);
+
+    unsigned IndexEncoding = getRegEncoding(Index);
+    unsigned BaseEncoding = getRegEncoding(Base);
+    emitSIBByte(SS, IndexEncoding, BaseEncoding, OS);
   }
 
-  // Emit Disp
+  // emit Disp
   if ((Mod == 0 && RM == 5) || (Mod == 2)) {
     // emit Disp32
     emitDoubleWord(DispImm, OS);

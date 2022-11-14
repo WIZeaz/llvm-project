@@ -40,9 +40,6 @@ public:
   Y86MCCodeEmitter &operator=(const Y86MCCodeEmitter &) = delete;
   ~Y86MCCodeEmitter() override = default;
 
-  void emitPrefix(const MCInst &MI, raw_ostream &OS,
-                  const MCSubtargetInfo &STI) const override;
-
   void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
