@@ -70,21 +70,21 @@ BitVector Y86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
 
   // set stack pointer
-  for (const MCPhysReg &SubReg : subregs_inclusive(Y86::ESP))
+  for (const MCPhysReg &SubReg : subregs_inclusive(Y86::RSP))
     Reserved.set(SubReg);
 
   // Set the Shadow Stack Pointer as reserved.
   // Reserved.set(Y86::SSP);
 
   // Set the instruction pointer register and its aliases as reserved.
-  for (const MCPhysReg &SubReg : subregs_inclusive(Y86::EIP))
+  for (const MCPhysReg &SubReg : subregs_inclusive(Y86::RIP))
     Reserved.set(SubReg);
 
   auto TFI = MF.getSubtarget().getFrameLowering();
 
   // Set the frame-pointer register and its aliases as reserved if needed.
   if (TFI->hasFP(MF)) {
-    for (const MCPhysReg &SubReg : subregs_inclusive(Y86::EBP))
+    for (const MCPhysReg &SubReg : subregs_inclusive(Y86::RBP))
       Reserved.set(SubReg);
   }
 
