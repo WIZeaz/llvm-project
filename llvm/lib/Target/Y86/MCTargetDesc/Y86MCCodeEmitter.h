@@ -46,9 +46,14 @@ public:
 
 private:
   unsigned getRegEncoding(const MCOperand &MO) const;
+  bool isREXExtendedReg(const MCInst &MI, unsigned OpNum) const;
   void emitMemModRMByte(const MCInst &MI, uint64_t TSFlags, uint8_t RegOpcode,
                         uint8_t OpNo, raw_ostream &OS) const;
-  void emitRegMemBytes(const MCInst &MI, raw_ostream &OS, uint64_t TSFlags, uint8_t& CurOp) const;
+  void emitRegMemBytes(const MCInst &MI, raw_ostream &OS, uint64_t TSFlags,
+                       uint8_t &CurOp) const;
+  void emitREXPrefix(const MCInst &MI, uint64_t TSFlags, uint8_t CurOp,
+                     raw_ostream &OS) const;
+  void checkREXMemBits(const MCInst &MI, uint64_t OpNo, uint8_t &REX_X, uint8_t &REX_B);
 };
 
 } // namespace llvm

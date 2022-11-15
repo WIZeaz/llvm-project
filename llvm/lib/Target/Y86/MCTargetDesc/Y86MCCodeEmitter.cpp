@@ -35,13 +35,18 @@ static uint8_t modRMByte(unsigned Mod, unsigned RegOpcode, unsigned RM) {
 }
 
 static inline void emitSIBByte(unsigned SS, unsigned Index, unsigned Base,
-                               raw_ostream &OS){
+                               raw_ostream &OS) {
   // SIB byte is in the same format as the modRMByte.
   emitByte(modRMByte(SS, Index, Base), OS);
 }
 
 unsigned Y86MCCodeEmitter::getRegEncoding(const MCOperand &MO) const {
   return Ctx.getRegisterInfo()->getEncodingValue(MO.getReg()) & 0x7;
+}
+
+bool Y86MCCodeEmitter::isREXExtendedReg(const MCInst &MI,
+                                        unsigned OpNum) const {
+  return (getRegEncoding(MI.getOperand(OpNum)) >> 3) & 1;
 }
 
 static void getAddressOperands(const MCInst &MI, uint8_t OpNo, MCOperand &Base,
@@ -121,7 +126,9 @@ void Y86MCCodeEmitter::emitRegMemBytes(const MCInst &MI, raw_ostream &OS,
   uint8_t Mod;
   uint8_t RegOpcode;
   uint8_t RM;
-  // when Opcode
+  if (MRMFormBits == Y86II::NoMRM)
+    return;
+
   if (MRMFormBits == Y86II::MRMrr) {
     // Mod must be 0b11
     Mod = 3;
@@ -159,6 +166,76 @@ void Y86MCCodeEmitter::emitRegMemBytes(const MCInst &MI, raw_ostream &OS,
   }
 }
 
+static void emitImmediate(int64_t Imm, uint64_t ImmTyBits, raw_ostream &OS) {
+  if (ImmTyBits == Y86II::NoImm)
+    return;
+
+  switch (ImmTyBits) {
+  case Y86II::Imm8:
+    emitByte(Imm, OS);
+    break;
+  case Y86II::Imm16:
+    emitWord(Imm, OS);
+    break;
+  case Y86II::Imm32:
+    emitDoubleWord(Imm, OS);
+    break;
+  case Y86II::Imm64:
+    emitQuadraWord(Imm, OS);
+    break;
+  default:
+    llvm_unreachable("unimplemented imm type");
+  }
+}
+
+void Y86MCCodeEmitter::checkREXMemBits(const MCInst &MI, uint64_t OpNo,
+                                       uint8_t &REX_X, uint8_t &REX_B) {}
+
+static void emitREXByte(uint8_t REX_W, uint8_t REX_R, uint8_t REX_X,
+                        uint8_t REX_B, raw_ostream &OS) {
+  assert(REX_R < 2 && REX_X < 2 && REX_B < 2 && REX_W < 2);
+  uint8_t REX = 0x40;
+  REX_W <<= 3;
+  REX_R <<= 2;
+  REX_X <<= 1;
+  REX = REX | REX_W | REX_R | REX_X;
+  emitByte(REX, OS);
+}
+
+void Y86MCCodeEmitter::emitREXPrefix(const MCInst &MI, uint64_t TSFlags,
+                                     uint8_t CurOp, raw_ostream &OS) const {
+  if (!Y86II::hasREX_W(TSFlags)) return;
+
+  uint8_t REX_W = 1;
+  uint8_t REX_R = 0;
+  uint8_t REX_X = 0;
+  uint8_t REX_B = 0;
+  uint64_t MRMFormBits = Y86II::getMRMFormat(TSFlags);
+  uint64_t FormBits = Y86II::getFormat(TSFlags);
+
+  if (MRMFormBits != Y86II::NoMRM) {
+
+    // assign REX_R
+    if (MRMFormBits == Y86II::MRMrm || MRMFormBits == Y86II::MRMrr) {
+      if (FormBits == Y86II::FormRI || FormBits == Y86II::FormRM)
+        REX_R = isREXExtendedReg(MI, CurOp);
+      else if (FormBits == Y86II::FormMR)
+        REX_R = isREXExtendedReg(MI, CurOp + 5);
+    }
+
+    // check REX_X REX_B
+    if (MRMFormBits == Y86II::MRMrm) {
+      if (FormBits == Y86II::FormRM)
+        CurOp += 1;
+    }
+
+    if (!Y86II::hasMem(TSFlags)) { // MRMFormBits is MRM*m or MRMrm
+      checkREXMemBits(MI, CurOp, REX_X, REX_B);
+    }
+  }
+  emitREXByte(REX_W, REX_R, REX_X, REX_B, OS);
+}
+
 void Y86MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
                                          SmallVectorImpl<MCFixup> &Fixups,
                                          const MCSubtargetInfo &STI) const {
@@ -182,40 +259,18 @@ void Y86MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
 
   // 0. REX prefix
-  if (Y86II::hasREX_W(TSFlags)) {
-    emitByte(0x48, OS);
-  }
+  emitREXPrefix(MI, TSFlags, CurOp, OS);
 
   // 1. Emit Opcode
-  // TODO: Opcode of FormOr,FormOrI should add reg num
+  // TODO: Opcode of FormOr should add reg num
   if (Y86II::shouldAddReg(TSFlags)) {
     Opcode += getRegEncoding(MI.getOperand(CurOp++));
   }
   emitByte(Opcode, OS);
 
   // 2. Emit ModRM, SIB, Disp
-  if (MRMFormBits != Y86II::NoMRM) {
-    emitRegMemBytes(MI, OS, TSFlags, CurOp);
-  }
+  emitRegMemBytes(MI, OS, TSFlags, CurOp);
 
   // 3. Emit Immediate
-  if (ImmTyBits != Y86II::NoImm) {
-    int64_t Imm = MI.getOperand(CurOp++).getImm();
-    switch (ImmTyBits) {
-    case Y86II::Imm8:
-      emitByte(Imm, OS);
-      break;
-    case Y86II::Imm16:
-      emitWord(Imm, OS);
-      break;
-    case Y86II::Imm32:
-      emitDoubleWord(Imm, OS);
-      break;
-    case Y86II::Imm64:
-      emitQuadraWord(Imm, OS);
-      break;
-    default:
-      llvm_unreachable("unimplemented imm type");
-    }
-  }
+  emitImmediate(MI.getOperand(CurOp++).getImm(), ImmTyBits, OS);
 }
