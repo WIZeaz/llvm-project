@@ -25,6 +25,8 @@
 #include "Y86TargetMachine.h"
 #include "Y86TargetObjectFile.h"
 
+#include <iostream>
+
 using namespace llvm;
 
 #define DEBUG_TYPE "Y86"
@@ -81,7 +83,9 @@ Y86TargetMachine::Y86TargetMachine(const Target &T, const Triple &TT,
                         getEffectiveCodeModel(CM, CodeModel::Small), OL),
       TLOF(std::make_unique<Y86ELFTargetObjectFile>()),
       DefaultSubtarget(TT, CPU, CPU, FS, *this) {
-
+  LLVM_DEBUG(dbgs() << __func__ << "  "
+                    << "CPU=" << CPU.str() << "  FS=" << TargetFS
+                    << "Triple=" << TT.getTriple() << "\n");
   initAsmInfo();
 }
 
@@ -91,7 +95,8 @@ const Y86Subtarget *
 Y86TargetMachine::getSubtargetImpl(const Function &F) const {
   std::string CPU = TargetCPU;
   std::string FS = TargetFS;
-
+  LLVM_DEBUG(dbgs() << __func__ << "  "
+                    << "CPU=" << CPU << "  FS=" << TargetFS << "\n");
   auto &I = SubtargetMap[CPU + FS];
   if (!I) {
     // This needs to be done before we create a new subtarget since any
@@ -104,8 +109,7 @@ Y86TargetMachine::getSubtargetImpl(const Function &F) const {
 }
 
 namespace {
-//@Y86PassConfig {
-/// Y86 Code Generator Pass Configuration Options.
+
 class Y86PassConfig : public TargetPassConfig {
 public:
   Y86PassConfig(Y86TargetMachine &TM, PassManagerBase &PM)
@@ -120,8 +124,6 @@ public:
   }
 
   bool addInstSelector() override;
-
-  void addPreEmitPass() override;
 };
 } // namespace
 
@@ -129,32 +131,9 @@ TargetPassConfig *Y86TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new Y86PassConfig(*this, PM);
 }
 
-/* void Y86PassConfig::addIRPasses() {
-  TargetPassConfig::addIRPasses();
-  // addPass(createAtomicExpandPass());
-} */
-
 // Install an instruction selector pass using
 // the ISelDag to gen Y86 code.
 bool Y86PassConfig::addInstSelector() {
   addPass(new Y86DAGToDAGISel(getY86TargetMachine(), getOptLevel()));
   return false;
-}
-
-#ifdef ENABLE_GPRESTORE
-void Y86PassConfig::addPreRegAlloc() {
-  if (!Y86ReserveGP) {
-    // $gp is a caller-saved register.
-    addPass(createY86EmitGPRestorePass(getY86TargetMachine()));
-  }
-  return;
-}
-#endif
-
-// Implemented by targets that want to run passes immediately before
-// machine code is emitted. return true if -print-machineinstrs should
-// print out the code after the passes.
-void Y86PassConfig::addPreEmitPass() {
-  // Y86TargetMachine &TM = getY86TargetMachine();
-  return;
 }

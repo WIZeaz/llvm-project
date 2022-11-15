@@ -45,15 +45,15 @@ public:
                          const MCSubtargetInfo &STI) const override;
 
 private:
-  unsigned getRegEncoding(const MCOperand &MO) const;
+  unsigned getY86RegNum(const MCOperand &MO) const;
+  unsigned getY86RegEncoding(const MCInst &MI, unsigned OpNum) const;
   bool isREXExtendedReg(const MCInst &MI, unsigned OpNum) const;
   void emitMemModRMByte(const MCInst &MI, uint64_t TSFlags, uint8_t RegOpcode,
                         uint8_t OpNo, raw_ostream &OS) const;
-  void emitRegMemBytes(const MCInst &MI, raw_ostream &OS, uint64_t TSFlags,
-                       uint8_t &CurOp) const;
+  void emitRegMemBytes(const MCInst &MI, uint64_t TSFlags, uint8_t &CurOp,
+                       raw_ostream &OS) const;
   void emitREXPrefix(const MCInst &MI, uint64_t TSFlags, uint8_t CurOp,
                      raw_ostream &OS) const;
-  void checkREXMemBits(const MCInst &MI, uint64_t OpNo, uint8_t &REX_X, uint8_t &REX_B);
 };
 
 } // namespace llvm

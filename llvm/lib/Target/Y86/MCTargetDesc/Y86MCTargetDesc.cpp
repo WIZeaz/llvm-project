@@ -92,7 +92,7 @@ MCSubtargetInfo *Y86_MC::createY86MCSubtargetInfo(const Triple &TT,
     ArchFS = (Twine(ArchFS) + "," + FS).str();
 
   if (CPU.empty())
-    CPU = "y86";
+    CPU = "";
 
   return createY86MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, ArchFS);
 }
@@ -107,9 +107,9 @@ static MCStreamer *createMCStreamer(const Triple &TT, MCContext &Context,
 }
 
 static MCAsmBackend *createY86AsmBackend(const Target &T,
-                                               const MCSubtargetInfo &STI,
-                                               const MCRegisterInfo &MRI,
-                                               const MCTargetOptions &Options) {
+                                         const MCSubtargetInfo &STI,
+                                         const MCRegisterInfo &MRI,
+                                         const MCTargetOptions &Options) {
   Triple TheTriple = STI.getTargetTriple();
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
   return new Y86AsmBackend(T, OSABI, STI);
