@@ -214,21 +214,21 @@ def MOVSX64rr32: I<0x63, FormRM, MRMrr, (outs GR64:$dst), (ins GR32:$src),
 def MOVSX64rm32: I<0x63, FormRM, MRMrm, (outs GR64:$dst), (ins i32mem:$src),
                     "movs{lq|xd}\t{$src, $dst|$dst, $src}",
                     [(set GR64:$dst, (i64 (sextloadi32 addr:$src)))]>,
-                    Sched<[WriteALULd]>;
+                    Sched<[WriteALULd]>, REX_W;
 
 def : Pat<(sext_inreg GR64:$src, i32),
           (MOVSX64rr32 (EXTRACT_SUBREG GR64:$src, sub_32bit))>;
 
-let Defs = [ESP], Uses = [ESP], hasSideEffects=0 in {
+let Defs = [RSP], Uses = [RSP], hasSideEffects=0 in {
 let mayLoad = 1, SchedRW = [WriteLoad] in {
 def POP16r  : I<0x58, FormOr, NoMRM, (outs GR16:$reg), (ins), "pop\t$reg", []>;
-def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop\t$reg", []>;
+//def POP32r  : I<0x58, FormOr, NoMRM, (outs GR32:$reg), (ins), "pop\t$reg", []>;
 def POP64r  : I<0x58, FormOr, NoMRM, (outs GR64:$reg), (ins), "pop\t$reg", []>;
 }
 
 let mayStore = 1, SchedRW = [WriteStore] in {
 def PUSH16r  : I<0x50, FormOr, NoMRM, (outs), (ins GR16:$reg), "push\t$reg",[]>;
-def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push\t$reg",[]>;    
+//def PUSH32r  : I<0x50, FormOr, NoMRM, (outs), (ins GR32:$reg), "push\t$reg",[]>;    
 def PUSH64r  : I<0x50, FormOr, NoMRM, (outs), (ins GR64:$reg), "push\t$reg",[]>;    
 }
 

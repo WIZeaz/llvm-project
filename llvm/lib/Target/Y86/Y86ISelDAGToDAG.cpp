@@ -52,10 +52,11 @@ void Y86DAGToDAGISel::selectFrameIndex(SDNode *SN, SDNode *N, unsigned Offset) {
 
   auto OffsetConstant = CurDAG->getTargetConstant(
       Offset, DL, TLI->getPointerTy(CurDAG->getDataLayout()));
+
   if (SN->hasOneUse())
-    CurDAG->SelectNodeTo(SN, Opc, N->getValueType(0), TFI, OffsetConstant);
+    CurDAG->SelectNodeTo(SN, Opc, VT, TFI, OffsetConstant);
   else
-    ReplaceNode(SN, CurDAG->getMachineNode(Opc, DL, N->getValueType(0), TFI,
+    ReplaceNode(SN, CurDAG->getMachineNode(Opc, DL, VT, TFI,
                                            OffsetConstant));
 }
 

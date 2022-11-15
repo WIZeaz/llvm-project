@@ -14,14 +14,13 @@
 #include "Y86RegisterInfo.h"
 #include "MCTargetDesc/Y86MCTargetDesc.h"
 #include "Y86Subtarget.h"
-// #include "Y86MachineFunction.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <iostream>
+#include <iterator>
 
 using namespace llvm;
 
@@ -31,11 +30,12 @@ using namespace llvm;
 #define DEBUG_TYPE "y86-reg-info"
 
 Y86RegisterInfo::Y86RegisterInfo(const Y86Subtarget &ST)
-    : Y86GenRegisterInfo(Y86::EIP), Subtarget(ST) {
+    : Y86GenRegisterInfo(Y86::RIP)
+    , Subtarget(ST) {
   SlotSize = 8;
-  StackPtr = Y86::ESP;
-  FramePtr = Y86::EBP;
-  BasePtr = Y86::EBX;
+  StackPtr = Y86::RSP;
+  FramePtr = Y86::RBP;
+  BasePtr = Y86::RBX;
 }
 
 const TargetRegisterClass *
@@ -104,6 +104,7 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
+  const Y86InstrInfo* TII = Subtarget.getInstrInfo();
   MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   const Y86FrameLowering *TFI = getFrameLowering(MF);
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
@@ -112,11 +113,6 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   Register BasePtr;
   if (MI.isReturn()) {
     llvm_unreachable("MI should not be ret");
-    /* assert((!hasStackRealignment(MF) ||
-            MF.getFrameInfo().isFixedObjectIndex(FrameIndex)) &&
-           "Return instruction can only reference SP relative frame objects");
-    FIOffset =
-        TFI->getFrameIndexReferenceSP(MF, FrameIndex, BasePtr, 0).getFixed(); */
   } else {
     FIOffset = TFI->getFrameIndexReference(MF, FrameIndex, BasePtr).getFixed();
   }
@@ -133,10 +129,20 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return;
   }
 
-  // For LEA64_32r when BasePtr is 32-bits (X32) we can use full-size 64-bit
-  // register as source operand, semantic is the same and destination is
-  // 32-bits. It saves one byte per lea in code since 0x67 prefix is avoided.
-  // Don't change BasePtr since it is used later for stack adjustment.
+  if (Opc == Y86::ADD32ri || Opc == Y86::ADD64ri) {
+    assert(BasePtr == FramePtr && "Expected the FP as base register");
+    Register DestReg = MI.getOperand(0).getReg();
+    BuildMI(MBB, II, MI.getDebugLoc(), TII->get(Y86::MOV64rr), DestReg)
+        .addReg(BasePtr);
+
+    MI.getOperand(FIOperandNum).ChangeToRegister(DestReg, false);
+    int64_t Offset = MI.getOperand(FIOperandNum + 1).getImm() + FIOffset;
+    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
+
+    return;
+  }
+
+
   Register MachineBasePtr = BasePtr;
 
   // This must be part of a four operand memory reference.  Replace the
@@ -156,13 +162,6 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
  */
   
-  if (Opc == Y86::ADD32ri || Opc == Y86::ADD64ri) {
-    assert(BasePtr == FramePtr && "Expected the FP as base register");
-    int64_t Offset = MI.getOperand(FIOperandNum + 1).getImm() + FIOffset;
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
-    return;
-  }
-
   if (MI.getOperand(FIOperandNum + 3).isImm()) {
     // Offset is a 32-bit integer.
     int Imm = (int)(MI.getOperand(FIOperandNum + 3).getImm());
@@ -189,7 +188,6 @@ bool Y86RegisterInfo::trackLivenessAfterRegAlloc(
   return true;
 }
 
-// pure virtual method
 Register Y86RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   const Y86FrameLowering *TFI = getFrameLowering(MF);
   return TFI->hasFP(MF) ? FramePtr : StackPtr;
