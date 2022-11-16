@@ -11,7 +11,7 @@
 #include "llvm/MC/TargetRegistry.h"
 using namespace llvm;
 
-Target& llvm::getTheY86Target() {
+Target &llvm::getTheY86Target() {
   static Target TheY86Target;
   return TheY86Target;
 }

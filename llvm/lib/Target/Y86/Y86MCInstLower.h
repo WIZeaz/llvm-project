@@ -9,7 +9,6 @@
 #ifndef LLVM_LIB_TARGET_Y86_Y86MCINSTLOWER_H
 #define LLVM_LIB_TARGET_Y86_Y86MCINSTLOWER_H
 
-//#include "MCTargetDesc/Y86MCExpr.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/MC/MCContext.h"
@@ -17,7 +16,7 @@
 
 namespace llvm {
 class Y86AsmPrinter;
-    /// Y86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
+/// Y86MCInstLower - This class is used to lower an MachineInstr into an MCInst.
 class LLVM_LIBRARY_VISIBILITY Y86MCInstLower {
   MCContext *Ctx;
   Y86AsmPrinter &AsmPrinter;

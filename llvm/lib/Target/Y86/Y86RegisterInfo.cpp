@@ -30,8 +30,7 @@ using namespace llvm;
 #define DEBUG_TYPE "y86-reg-info"
 
 Y86RegisterInfo::Y86RegisterInfo(const Y86Subtarget &ST)
-    : Y86GenRegisterInfo(Y86::RIP)
-    , Subtarget(ST) {
+    : Y86GenRegisterInfo(Y86::RIP), Subtarget(ST) {
   SlotSize = 8;
   StackPtr = Y86::RSP;
   FramePtr = Y86::RBP;
@@ -104,7 +103,7 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const Y86InstrInfo* TII = Subtarget.getInstrInfo();
+  const Y86InstrInfo *TII = Subtarget.getInstrInfo();
   MachineBasicBlock::iterator MBBI = MBB.getFirstTerminator();
   const Y86FrameLowering *TFI = getFrameLowering(MF);
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
@@ -142,7 +141,6 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     return;
   }
 
-
   Register MachineBasePtr = BasePtr;
 
   // This must be part of a four operand memory reference.  Replace the
@@ -152,22 +150,12 @@ void Y86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   if (BasePtr == StackPtr)
     FIOffset += SPAdj;
 
-  // The frame index format for stackmaps and patchpoints is different from the
-  // Y86 format. It only has a FI and an offset.
-  /* if (Opc == TargetOpcode::STACKMAP || Opc == TargetOpcode::PATCHPOINT) {
-    assert(BasePtr == FramePtr && "Expected the FP as base register");
-    int64_t Offset = MI.getOperand(FIOperandNum + 1).getImm() + FIOffset;
-    MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
-    return;
-  }
- */
-  
   if (MI.getOperand(FIOperandNum + 3).isImm()) {
     // Offset is a 32-bit integer.
     int Imm = (int)(MI.getOperand(FIOperandNum + 3).getImm());
     int Offset = FIOffset + Imm;
-    /* assert((!Is64Bit || isInt<32>((long long)FIOffset + Imm)) &&
-           "Requesting 64-bit offset in 32-bit immediate!"); */
+    assert(isInt<32>((long long)FIOffset + Imm) &&
+           "Requesting 64-bit offset in 32-bit immediate!");
     if (Offset != 0)
       MI.getOperand(FIOperandNum + 3).ChangeToImmediate(Offset);
   } else {

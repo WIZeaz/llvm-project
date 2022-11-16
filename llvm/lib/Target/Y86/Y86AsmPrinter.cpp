@@ -76,7 +76,7 @@ bool Y86AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void Y86AsmPrinter::emitFunctionBodyStart() {
-    MCInstLowering.Initialize(&MF->getContext());
+  MCInstLowering.Initialize(&MF->getContext());
   /*   if (EmitFPOData) {
       if (auto *XTS =
           static_cast<Y86TargetStreamer *>(OutStreamer->getTargetStreamer()))

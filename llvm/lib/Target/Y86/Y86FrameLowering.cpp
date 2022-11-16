@@ -23,8 +23,8 @@ void Y86FrameLowering::emitPrologue(MachineFunction &MF,
   uint64_t StackSize = MFI.getStackSize();
   DebugLoc DL;
 
-  // BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::ESI);
-  // BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH32r)).addReg(Y86::EDI);
+  // BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH64r)).addReg(Y86::RSI);
+  // BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH64r)).addReg(Y86::RDI);
   if (hasFP(MF)) {
     BuildMI(MBB, MBBI, DL, TII.get(Y86::PUSH64r)).addReg(Y86::RBP);
     BuildMI(MBB, MBBI, DL, TII.get(Y86::MOV64rr))
@@ -48,8 +48,8 @@ void Y86FrameLowering::emitEpilogue(MachineFunction &MF,
   if (hasFP(MF)) {
     BuildMI(MBB, MBBI, DL, TII.get(Y86::POP64r)).addReg(Y86::RBP);
   }
-  // BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::EDI);
-  // BuildMI(MBB, MBBI, DL, TII.get(Y86::POP32r)).addReg(Y86::ESI);
+  // BuildMI(MBB, MBBI, DL, TII.get(Y86::POP64r)).addReg(Y86::RDI);
+  // BuildMI(MBB, MBBI, DL, TII.get(Y86::POP64r)).addReg(Y86::RSI);
 }
 bool Y86FrameLowering::hasFP(const MachineFunction &MF) const { return true; }
 
@@ -62,12 +62,6 @@ StackOffset Y86FrameLowering::getFrameIndexReference(const MachineFunction &MF,
   // We can't calculate offset from frame pointer if the stack is realigned,
   // so enforce usage of stack/base pointer.  The base pointer is used when we
   // have dynamic allocas in addition to dynamic realignment.
-
-  /*   if (TRI->hasBasePointer(MF))
-      FrameReg = IsFixed ? TRI->getFramePtr() : TRI->getBaseRegister();
-    else if (TRI->hasStackRealignment(MF))
-      FrameReg = IsFixed ? TRI->getFramePtr() : TRI->getStackRegister();
-    else */
 
   FrameReg = TRI->getFrameRegister(MF);
 

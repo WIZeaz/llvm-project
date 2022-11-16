@@ -13,12 +13,12 @@
 
 using namespace llvm;
 
-void Y86MachineFunctionInfo::anchor() { }
+void Y86MachineFunctionInfo::anchor() {}
 
 void Y86MachineFunctionInfo::setRestoreBasePointer(const MachineFunction *MF) {
   if (!RestoreBasePointerOffset) {
     const Y86RegisterInfo *RegInfo = static_cast<const Y86RegisterInfo *>(
-      MF->getSubtarget().getRegisterInfo());
+        MF->getSubtarget().getRegisterInfo());
     unsigned SlotSize = RegInfo->getSlotSize();
     for (const MCPhysReg *CSR = MF->getRegInfo().getCalleeSavedRegs();
          unsigned Reg = *CSR; ++CSR) {
@@ -27,4 +27,3 @@ void Y86MachineFunctionInfo::setRestoreBasePointer(const MachineFunction *MF) {
     }
   }
 }
-

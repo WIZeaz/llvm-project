@@ -13,16 +13,15 @@
 
 namespace llvm {
 
-  /// This implementation is used for Y86 ELF targets that don't
-  /// have a further specialization.
-  class Y86ELFTargetObjectFile : public TargetLoweringObjectFileELF {
-  public:
-    Y86ELFTargetObjectFile() {
-      //PLTRelativeVariantKind = MCSymbolRefExpr::VK_PLT;
-    }
-    /// Describe a TLS variable address within debug info.
-    const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
-  };
+/// This implementation is used for Y86 ELF targets that don't
+/// have a further specialization.
+class Y86ELFTargetObjectFile : public TargetLoweringObjectFileELF {
+public:
+  Y86ELFTargetObjectFile() {
+  }
+  /// Describe a TLS variable address within debug info.
+  const MCExpr *getDebugThreadLocalSymbol(const MCSymbol *Sym) const override;
+};
 
 } // end namespace llvm
 

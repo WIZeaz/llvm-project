@@ -31,7 +31,7 @@ Y86ELFMCAsmInfo::Y86ELFMCAsmInfo(const Triple &T) {
   // OTOH, stack slot size is always 8 for x86-64, even with the x32 ABI.
   CalleeSaveStackSlotSize = is64Bit ? 8 : 4;
 
-  //AssemblerDialect = AsmWriterFlavor;
+  // AssemblerDialect = AsmWriterFlavor;
 
   TextAlignFillValue = 0x90;
 

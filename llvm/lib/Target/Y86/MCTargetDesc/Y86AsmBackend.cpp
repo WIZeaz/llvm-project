@@ -3,8 +3,8 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCFixupKindInfo.h"
-#include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCObjectWriter.h"
+#include "llvm/MC/MCValue.h"
 using namespace llvm;
 
 static unsigned getFixupKindSize(unsigned Kind) {
@@ -103,10 +103,9 @@ const MCFixupKindInfo &Y86AsmBackend::getFixupKindInfo(MCFixupKind Kind) const {
 }
 
 bool Y86AsmBackend::writeNopData(raw_ostream &OS, uint64_t Count,
-                                       const MCSubtargetInfo *STI) const {
+                                 const MCSubtargetInfo *STI) const {
   return true;
 }
-
 
 std::unique_ptr<MCObjectTargetWriter>
 Y86AsmBackend::createObjectTargetWriter() const {

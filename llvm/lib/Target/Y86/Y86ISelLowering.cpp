@@ -38,7 +38,7 @@ Y86TargetLowering::Y86TargetLowering(const Y86TargetMachine &TM,
   for (MVT VT : MVT::integer_valuetypes())
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1,
                      Promote); // signextend from i1 to VT
-  //setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Expand);
+  // setLoadExtAction(ISD::SEXTLOAD, MVT::i64, MVT::i32, Expand);
 
   computeRegisterProperties(Subtarget.getRegisterInfo());
 }
@@ -139,13 +139,6 @@ SDValue Y86TargetLowering::LowerFormalArguments(
   }
 
   unsigned StackSize = CCInfo.getNextStackOffset();
-
-  /* if (IsVarArg)
-    VarArgsLoweringHelper(FuncInfo, dl, DAG, Subtarget, CallConv, CCInfo)
-        .lowerVarArgsParameters(Chain, StackSize); */
-
-  // FuncInfo->setBytesToPopOnReturn(0);
-  // FuncInfo->setArgumentStackSize(StackSize);
 
   return Chain;
 }
@@ -320,9 +313,6 @@ Y86TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
         DAG.getRegister(RetVal.first, RetVal.second.getValueType()));
   }
 
-  // Swift calling convention does not require we copy the sret argument
-  // into %rax/%eax for the return, and SRetReturnReg is not set for Swift.
-
   // All x86 ABIs require that for returning structs by value we copy
   // the sret argument into %rax/%eax (depending on ABI) for the return.
   // We saved the argument into a virtual register in the entry block,
@@ -333,23 +323,6 @@ Y86TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   // false, then an sret argument may be implicitly inserted in the SelDAG. In
   // either case FuncInfo->setSRetReturnReg() will have been called.
   if (Register SRetReg = FuncInfo->getSRetReturnReg()) {
-    // When we have both sret and another return value, we should use the
-    // original Chain stored in RetOps[0], instead of the current Chain updated
-    // in the above loop. If we only have sret, RetOps[0] equals to Chain.
-
-    // For the case of sret and another return value, we have
-    //   Chain_0 at the function entry
-    //   Chain_1 = getCopyToReg(Chain_0) in the above loop
-    // If we use Chain_1 in getCopyFromReg, we will have
-    //   Val = getCopyFromReg(Chain_1)
-    //   Chain_2 = getCopyToReg(Chain_1, Val) from below
-
-    // getCopyToReg(Chain_0) will be glued together with
-    // getCopyToReg(Chain_1, Val) into Unit A, getCopyFromReg(Chain_1) will be
-    // in Unit B, and we will have cyclic dependency between Unit A and Unit B:
-    //   Data dependency from Unit B to Unit A due to usage of Val in
-    //     getCopyToReg(Chain_1, Val)
-    //   Chain dependency from Unit A to Unit B
 
     // So here, we use RetOps[0] (i.e Chain_0) for getCopyFromReg.
     SDValue Val = DAG.getCopyFromReg(RetOps[0], dl, SRetReg,

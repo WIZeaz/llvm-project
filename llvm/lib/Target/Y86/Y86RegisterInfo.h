@@ -19,7 +19,6 @@
 #define GET_REGINFO_HEADER
 #include "Y86GenRegisterInfo.inc"
 
-
 namespace llvm {
 class Y86Subtarget;
 class TargetInstrInfo;

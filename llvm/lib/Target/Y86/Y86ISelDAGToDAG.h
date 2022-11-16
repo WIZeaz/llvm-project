@@ -19,13 +19,12 @@
 #include "llvm/Support/MathExtras.h"
 namespace llvm {
 
-FunctionPass *createY86ISelDag(Y86TargetMachine&, CodeGenOpt::Level );
+FunctionPass *createY86ISelDag(Y86TargetMachine &, CodeGenOpt::Level);
 
 class Y86DAGToDAGISel : public SelectionDAGISel {
 public:
   explicit Y86DAGToDAGISel(Y86TargetMachine &TM, CodeGenOpt::Level OL)
       : SelectionDAGISel(TM, OL), Subtarget(nullptr) {}
-  // bool runOnMachineFunction(MachineFunction &MF) override;
   // Pass Name
   bool runOnMachineFunction(MachineFunction &MF) override {
     // Make sure we re-emit a set of the global base reg if necessary
@@ -40,8 +39,6 @@ public:
 
   bool shouldAvoidImmediateInstFormsForSize(SDNode *N) const;
 
-  // bool runOnMachineFunction(MachineFunction &MF) override;
-
 protected:
   /// Keep a pointer to the Y86Subtarget around so that we can make the right
   /// decision when generating code for different targets.
@@ -51,11 +48,10 @@ protected:
 
 private:
   void Select(SDNode *N) override;
-  void selectFrameIndex(SDNode *SN, SDNode *N, unsigned Offset=0);
+  void selectFrameIndex(SDNode *SN, SDNode *N, unsigned Offset = 0);
   bool selectAddr(SDNode *Parent, SDValue N, SDValue &Base, SDValue &Scale,
                   SDValue &Index, SDValue &Disp, SDValue &Segment);
 #include "Y86GenDAGISel.inc"
 };
-
 
 } // namespace llvm

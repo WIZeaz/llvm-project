@@ -52,10 +52,7 @@ using namespace llvm;
 void Y86InstrInfo::anchor() {}
 
 Y86InstrInfo::Y86InstrInfo(Y86Subtarget &STI)
-    : Y86GenInstrInfo(/* Y86::ADJCALLSTACKDOWN32,
-                      Y86::ADJCALLSTACKUP32,
-                      Y86::CATCHRET,
-                      Y86::RET32 */),
+    : Y86GenInstrInfo(),
       Subtarget(STI), RI(STI) {
 }
 
@@ -73,7 +70,8 @@ void Y86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = Y86::MOV32rr;
   else if (Y86::GR16RegClass.contains(DestReg, SrcReg))
     Opc = Y86::MOV16rr;
-  else llvm_unreachable("unsupport copy regclass");
+  else
+    llvm_unreachable("unsupport copy regclass");
 
   if (Opc) {
     BuildMI(MBB, MI, DL, get(Opc), DestReg)
@@ -92,11 +90,6 @@ void Y86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   LLVM_DEBUG(dbgs() << "Cannot copy " << RI.getName(SrcReg) << " to "
                     << RI.getName(DestReg) << '\n');
   report_fatal_error("Cannot emit physreg copy instruction");
-}
-
-/// Test if the given register is a physical h register.
-static bool isHReg(unsigned Reg) {
-  return Y86::GR8_ABCD_HRegClass.contains(Reg);
 }
 
 static unsigned getLoadStoreRegOpcode(Register Reg,
@@ -176,7 +169,8 @@ bool Y86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     if (StackAdj == 0) {
       MIB = BuildMI(MBB, MI, MI.getDebugLoc(), get(Y86::RET32));
     } else if (isUInt<16>(StackAdj)) {
-      MIB = BuildMI(MBB, MI, MI.getDebugLoc(), get(Y86::RETI32)).addImm(StackAdj);
+      MIB =
+          BuildMI(MBB, MI, MI.getDebugLoc(), get(Y86::RETI32)).addImm(StackAdj);
     } else {
       report_fatal_error("StackAdj is too large");
     }
@@ -188,13 +182,6 @@ bool Y86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
   }
   return false;
 }
-
-/* MCInst Y86InstrInfo::getNop() const {
-  MCInst Nop;
-  Nop.setOpcode(Y86::NOOP);
-  return Nop;
-}
- */
 
 #define GET_INSTRINFO_HELPERS
 #include "Y86GenInstrInfo.inc"

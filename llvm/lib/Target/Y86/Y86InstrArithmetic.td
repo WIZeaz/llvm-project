@@ -1,4 +1,3 @@
-//ADDri ADDrr ADDrm
 
 multiclass ArithUnaryOp_r<bits<8> opcode_rr, MRM_Format mrm, PatFrag node, string asmname>{
   let Constraints = "$dst = $op1" , BinOP=1 in {
@@ -28,7 +27,6 @@ multiclass ArithBinOp<bits<8> opcode_rr, bits<8> opcode_ri, MRM_Format mrm_ri, S
               !strconcat(asmname,"\t$op1, $op2"),[(set GR32:$dst, (node GR32:$op1, imm:$op2))]>;
   def NAME#64ri: Ii32<opcode_ri, FormMI, mrm_ri, (outs GR64:$dst), (ins GR64:$op1, i64imm:$op2),
             !strconcat(asmname,"\t$op1, $op2"),[(set GR64:$dst, (node GR64:$op1, imm:$op2))]>, REX_W;
-  // TODO: add BinOP#32rm and 16,8bits instr
   }
 }
 

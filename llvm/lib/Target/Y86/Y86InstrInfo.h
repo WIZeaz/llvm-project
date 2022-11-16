@@ -13,7 +13,7 @@
 #ifndef LLVM_LIB_TARGET_Y86_Y86INSTRINFO_H
 #define LLVM_LIB_TARGET_Y86_Y86INSTRINFO_H
 
-//#include "MCTargetDesc/Y86BaseInfo.h"
+// #include "MCTargetDesc/Y86BaseInfo.h"
 #include "Y86RegisterInfo.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/TargetInstrInfo.h"
@@ -24,7 +24,6 @@
 
 namespace llvm {
 class Y86Subtarget;
-
 
 class Y86InstrInfo final : public Y86GenInstrInfo {
   Y86Subtarget &Subtarget;
@@ -60,19 +59,6 @@ public:
       I.getOperand(1).setImm(V);
   }
 
-  /*   unsigned isLoadFromStackSlot(const MachineInstr &MI,
-                                 int &FrameIndex) const override;
-    unsigned isLoadFromStackSlot(const MachineInstr &MI,
-                                 int &FrameIndex,
-                                 unsigned &MemBytes) const override;
-
-    unsigned isStoreToStackSlot(const MachineInstr &MI,
-                                int &FrameIndex) const override;
-
-    unsigned isStoreToStackSlot(const MachineInstr &MI,
-                                int &FrameIndex,
-                                unsigned &MemBytes) const override; */
-
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                    const DebugLoc &DL, MCRegister DestReg, MCRegister SrcReg,
                    bool KillSrc) const override;
@@ -89,7 +75,6 @@ public:
 
   bool expandPostRAPseudo(MachineInstr &MI) const override;
 
-  // MCInst getNop() const override;
 
 #define GET_INSTRINFO_HELPER_DECLS
 #include "Y86GenInstrInfo.inc"

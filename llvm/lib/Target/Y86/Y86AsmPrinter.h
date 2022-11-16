@@ -9,14 +9,13 @@
 #ifndef LLVM_LIB_TARGET_Y86_Y86ASMPRINTER_H
 #define LLVM_LIB_TARGET_Y86_Y86ASMPRINTER_H
 
-#include "Y86TargetMachine.h"
 #include "Y86MCInstLower.h"
+#include "Y86TargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 
 namespace llvm {
 
 class MCStreamer;
-
 
 class LLVM_LIBRARY_VISIBILITY Y86AsmPrinter : public AsmPrinter {
 
@@ -24,10 +23,8 @@ class LLVM_LIBRARY_VISIBILITY Y86AsmPrinter : public AsmPrinter {
   Y86MCInstLower MCInstLowering;
 
 public:
-
   Y86AsmPrinter(TargetMachine &TM, std::unique_ptr<MCStreamer> Streamer)
-      : AsmPrinter(TM, std::move(Streamer)), MCInstLowering(*this){
-      }
+      : AsmPrinter(TM, std::move(Streamer)), MCInstLowering(*this) {}
 
   StringRef getPassName() const override { return "Y86 Assembly Printer"; }
 

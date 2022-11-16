@@ -137,22 +137,8 @@ def i32immSExt8_su : PatLeaf<(i32immSExt8), [{
     return !shouldAvoidImmediateInstFormsForSize(N);
 }]>;
 
-
-/* let SchedRW = [WriteStore] in {
-def MOV8mi  : Ii8 <0xC6, MRM0m, (outs), (ins i8mem :$dst, i8imm :$src),
-                   "mov\t$src, $dst",
-                   [(store (i8 imm_su:$src), addr:$dst)]>;
-def MOV16mi : Ii16<0xC7, MRM0m, (outs), (ins i16mem:$dst, i16imm:$src),
-                   "mov\t$src, $dst",
-                   [(store (i16 imm_su:$src), addr:$dst)]>;
-def MOV32mi : Ii32<0xC7, MRM0m, (outs), (ins i32mem:$dst, i32imm:$src),
-                   "mov\t$src, $dst",
-                   [(store (i32 imm_su:$src), addr:$dst)]>;
-} // SchedRW */ 
-
 let hasSideEffects = 0, isMoveReg = 1, SchedRW = [WriteMove] in {
-/* def MOV8rr  : I<0x88, FormMR, MRMrr, (outs GR8 :$dst), (ins GR8 :$src),
-              "mov{b}\t{$src, $dst|$dst, $src}", []>; */
+
 def MOV16rr : I<0x89, FormMR, MRMrr, (outs GR16:$dst), (ins GR16:$src),
                 "mov\t$src, $dst", []>;
 def MOV32rr : I<0x89, FormMR, MRMrr, (outs GR32:$dst), (ins GR32:$src),
@@ -162,9 +148,7 @@ def MOV64rr : I<0x89, FormMR, MRMrr, (outs GR64:$dst), (ins GR64:$src),
 }
 
 let isAsCheapAsAMove = 1, isMoveImm = 1 in {
-/* def MOV8ri  : Ii8 <0xB0, FormOr, NoMRM, (outs GR8 :$dst), (ins i8imm :$src),
-                   "mov{b}\t{$src, $dst|$dst, $src}",
-                   [(set GR8:$dst, imm:$src)]>; */
+
 def MOV16ri : Ii16<0xB8, FormOr, NoMRM, (outs GR16:$dst), (ins i16imm:$src),
                    "mov\t$src, $dst",
                    [(set GR16:$dst, imm:$src)]>;
@@ -177,9 +161,7 @@ def MOV64ri : Ii64<0xB8, FormOr, NoMRM, (outs GR64:$dst), (ins i64imm:$src),
 }
 
 let canFoldAsLoad = 1, isReMaterializable = 1, SchedRW = [WriteLoad] in {
-/* def MOV8rm  : I<0x8A, FormRM, MRMrm, (outs GR8 :$dst), (ins i8mem :$src),
-                "mov{b}\t{$src, $dst|$dst, $src}",
-                [(set GR8:$dst, (loadi8 addr:$src))]>; */
+
 def MOV16rm : I<0x8B, FormRM, MRMrm, (outs GR16:$dst), (ins i16mem:$src),
                 "mov\t$src, $dst",
                 [(set GR16:$dst, (loadi16 addr:$src))]>;
@@ -193,9 +175,7 @@ def MOV64rm : I<0x8B, FormRM, MRMrm, (outs GR64:$dst), (ins i64mem:$src),
 
 
 let SchedRW = [WriteStore] in {
-/* def MOV8mr  : I<0x88, FormMR, MRMrm, (outs), (ins i8mem :$dst, GR8 :$src),
-                "mov{b}\t{$src, $dst|$dst, $src}",
-                [(store GR8:$src, addr:$dst)]>; */
+
 def MOV16mr : I<0x89, FormMR, MRMrm, (outs), (ins i16mem:$dst, GR16:$src),
                 "mov\t$src, $dst",
                 [(store GR16:$src, addr:$dst)]>;

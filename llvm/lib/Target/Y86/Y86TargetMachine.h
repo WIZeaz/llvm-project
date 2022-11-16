@@ -14,9 +14,7 @@
 #ifndef LLVM_LIB_TARGET_Y86_Y86TARGETMACHINE_H
 #define LLVM_LIB_TARGET_Y86_Y86TARGETMACHINE_H
 
-//#include "MCTargetDesc/Y86ABIInfo.h"
 #include "Y86Subtarget.h"
-
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
@@ -24,24 +22,20 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-//class formatted_raw_ostream;
-//class Y86RegisterInfo;
 
 class Y86TargetMachine : public LLVMTargetMachine {
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
   Y86Subtarget DefaultSubtarget;
   mutable StringMap<std::unique_ptr<Y86Subtarget>> SubtargetMap;
-  
+
 public:
   Y86TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
-                    StringRef FS, const TargetOptions &Options,
-                    Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
-                    CodeGenOpt::Level OL, bool JIT);
+                   StringRef FS, const TargetOptions &Options,
+                   Optional<Reloc::Model> RM, Optional<CodeModel::Model> CM,
+                   CodeGenOpt::Level OL, bool JIT);
   ~Y86TargetMachine() override;
 
-  const Y86Subtarget *getSubtargetImpl() const {
-    return &DefaultSubtarget;
-  }
+  const Y86Subtarget *getSubtargetImpl() const { return &DefaultSubtarget; }
 
   const Y86Subtarget *getSubtargetImpl(const Function &F) const override;
 
@@ -51,9 +45,8 @@ public:
   TargetLoweringObjectFile *getObjFileLowering() const override {
     return TLOF.get();
   }
-  //const Y86ABIInfo &getABI() const { return ABI; }
 };
 
-}
+} // namespace llvm
 
 #endif

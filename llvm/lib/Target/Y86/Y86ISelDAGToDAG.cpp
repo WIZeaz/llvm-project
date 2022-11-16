@@ -90,11 +90,11 @@ bool Y86DAGToDAGISel::shouldAvoidImmediateInstFormsForSize(SDNode *N) const {
 /// Parent is the parent node of the addr operand that is being matched.  It
 /// is always a load, store, atomic node, or null.  It is only null when
 /// checking memory operands for inline asm nodes.
-// addr= Base+Scale*Index+[Disp] Scale=1,2,4,8
-// Segment is deprecated in x86-64
+/// Segment is deprecated in x86-64
 bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
                                  SDValue &Scale, SDValue &Index, SDValue &Disp,
                                  SDValue &Segment) {
+  // addr= Base+Scale*Index+[Disp] Scale=1,2,4,8
   SDLoc DL(N);
   MVT VT = N.getSimpleValueType();
   SDValue Zero = CurDAG->getTargetConstant(0, DL, VT);
@@ -111,19 +111,7 @@ bool Y86DAGToDAGISel::selectAddr(SDNode *Parent, SDValue N, SDValue &Base,
     return true;
   }
 
-  // [Base] + disp
-  if (CurDAG->isBaseWithConstantOffset(N)) {
-    LLVM_DEBUG(dbgs() << "select [Base]+disp mode\n");
-    // Base can be FrameIndex or SDValue
-    // If the first operand is a FI, get the TargetFI Node
-    if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N.getOperand(0)))
-      Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), VT);
-    else
-      Base = N.getOperand(0);
-    ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1));
-    Disp = CurDAG->getTargetConstant(CN->getSExtValue(), DL, VT);
-    return true;
-  }
+  // TODO: match other address mode
 
   // default: Use Base
   LLVM_DEBUG(dbgs() << "select [Base] mode (default)\n");

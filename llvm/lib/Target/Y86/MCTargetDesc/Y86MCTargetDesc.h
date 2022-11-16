@@ -64,25 +64,9 @@ MCSubtargetInfo *createY86MCSubtargetInfo(const Triple &TT, StringRef CPU,
                                           StringRef FS);
 } // namespace Y86_MC
 
-
-
 /// Construct an Y86 ELF object writer.
 std::unique_ptr<MCObjectTargetWriter>
 createY86ELFObjectWriter(bool IsELF64, uint8_t OSABI, uint16_t EMachine);
-
-/// Construct an Y86 Win COFF object writer.
-/* std::unique_ptr<MCObjectTargetWriter>
-createY86WinCOFFObjectWriter(bool Is64Bit);
- */
-/// Returns the sub or super register of a specific Y86 register.
-/// e.g. getY86SubSuperRegister(Y86::EAX, 16) returns Y86::AX.
-/// Aborts on error.
-// MCRegister getY86SubSuperRegister(MCRegister, unsigned, bool High = false);
-
-/// Returns the sub or super register of a specific Y86 register.
-/// Like getY86SubSuperRegister() but returns 0 on error.
-/* MCRegister getY86SubSuperRegisterOrZero(MCRegister, unsigned,
-                                        bool High = false); */
 
 } // namespace llvm
 

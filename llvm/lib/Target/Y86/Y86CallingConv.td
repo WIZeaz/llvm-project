@@ -19,18 +19,6 @@ def RetCC_Y86Common: CallingConv<[
   CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>
 ]>;
 
-// Y86-32 FastCC return-value convention.
-/* def RetCC_Y86_Fast : CallingConv<[
-
-  // For integers, ECX can be used as an extra return register
-  CCIfType<[i8],  CCAssignToReg<[AL, DL, CL]>>,
-  CCIfType<[i16], CCAssignToReg<[AX, DX, CX]>>,
-  CCIfType<[i32], CCAssignToReg<[EAX, EDX, ECX]>>,
-
-  // Otherwise, it is the same as the common Y86 calling convention.
-  CCDelegateTo<RetCC_Y86Common>
-]>;
- */
 // This is the root return-value convention for the Y86-32 backend.
 def RetCC_Y86 : CallingConv<[
   CCDelegateTo<RetCC_Y86Common>

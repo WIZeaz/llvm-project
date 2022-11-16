@@ -15,7 +15,7 @@
 using namespace llvm;
 using namespace dwarf;
 
-const MCExpr *Y86ELFTargetObjectFile::getDebugThreadLocalSymbol(
-    const MCSymbol *Sym) const {
+const MCExpr *
+Y86ELFTargetObjectFile::getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
   return MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
 }
